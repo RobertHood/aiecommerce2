@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }} - Nexus Store</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-light: rgba(255, 255, 255, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body {
+            min-height: 100vh;
+            color: var(--text-light);
+            background-color: var(--bg-dark);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.13) 0, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.13) 0, transparent 50%);
+            background-attachment: fixed;
+        }
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 70px;
+            padding: 0 5%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-light);
+            z-index: 100;
+        }
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .nav-links { display: flex; gap: 2rem; align-items: center; }
+        .nav-links a { color: var(--text-light); text-decoration: none; font-weight: 500; transition: color 0.3s; }
+        .nav-links a:hover { color: var(--primary); }
+        .cart-link { position: relative; }
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -10px;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #fff;
+            background: var(--primary);
+        }
+        main { max-width: 1200px; margin: 0 auto; padding: 100px 5% 60px; }
+        .breadcrumb { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 2rem; color: var(--text-muted); font-size: 0.9rem; }
+        .breadcrumb a { color: var(--text-muted); text-decoration: none; transition: color 0.3s; }
+        .breadcrumb a:hover { color: var(--text-light); }
+        .breadcrumb span { margin: 0 4px; }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+        .product-image-panel {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            font-size: 8rem;
+        }
+        .product-info-panel { display: flex; flex-direction: column; gap: 1.5rem; }
+        .cat-badge {
+            display: inline-block;
+            width: fit-content;
+            padding: 0.3rem 0.9rem;
+            border-radius: 20px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: var(--primary);
+            background: rgba(99, 102, 241, 0.15);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .product-info-panel h1 { font-size: 2rem; font-weight: 700; line-height: 1.2; }
+        .rating-row { display: flex; align-items: center; gap: 0.8rem; }
+        .stars { color: #f59e0b; }
+        .review-count { color: var(--text-muted); font-size: 0.9rem; }
+        .price-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .price { font-size: 2.2rem; font-weight: 700; color: var(--primary); }
+        .orig-price { font-size: 1.1rem; color: var(--text-muted); text-decoration: line-through; }
+        .save-tag {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.15);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .description { color: var(--text-muted); line-height: 1.7; font-size: 0.95rem; }
+        .features { display: flex; flex-direction: column; gap: 0.6rem; }
+        .features h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.3rem; }
+        .feature-item { display: flex; align-items: center; gap: 0.7rem; color: var(--text-muted); font-size: 0.9rem; }
+        .feature-item i { width: 16px; color: #10b981; }
+        .qty-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .qty-label { font-weight: 500; }
+        .qty-control {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        .qty-btn {
+            width: 38px;
+            height: 38px;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1rem;
+            background: none;
+            transition: background 0.2s;
+        }
+        .qty-btn:hover { background: rgba(255, 255, 255, 0.1); }
+        .qty-val { width: 44px; text-align: center; font-weight: 600; font-size: 1rem; }
+        .cta-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .btn-primary {
+            flex: 1;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            color: #fff;
+            background: var(--primary);
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.3s, transform 0.2s;
+        }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); }
+        .btn-secondary {
+            padding: 1rem 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            color: #fff;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.05);
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); }
+        .stock-note { color: var(--text-muted); font-size: 0.85rem; }
+        .stock-note span { color: #10b981; font-weight: 600; }
+        .toast {
+            position: fixed;
+            top: 90px;
+            right: 30px;
+            padding: 0.9rem 1.4rem;
+            border-radius: 12px;
+            color: #fff;
+            background: rgba(16, 185, 129, 0.9);
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-10px);
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 9999;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .related-section { margin-top: 4rem; }
+        .related-section h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; }
+        .related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+        .related-card {
+            display: block;
+            padding: 1.2rem;
+            border-radius: 14px;
+            border: 1px solid var(--border-light);
+            color: inherit;
+            text-decoration: none;
+            background: var(--bg-card);
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+        }
+        .related-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+        .related-icon {
+            height: 100px;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+        .related-card h4 { font-size: 1rem; margin-bottom: 0.3rem; }
+        .related-card .rprice { color: var(--primary); font-weight: 700; }
+        @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="brand"><i class="fa-solid fa-cube"></i> Nexus Store</a>
+    <div class="nav-links">
+        <a href="/">Shop</a>
+        <a href="/cart/" class="cart-link">
+            <i class="fa-solid fa-cart-shopping"></i> Cart
+            <span class="cart-badge" id="cartBadge" {% if not cart_count %}style="display:none"{% endif %}>{{ cart_count }}</span>
+        </a>
+    </div>
+</nav>
+
+<main>
+    <div class="breadcrumb">
+        <a href="/">Home</a><span>&rsaquo;</span>
+        <a href="/">{{ product.category.name }}</a><span>&rsaquo;</span>
+        <span>{{ product.name }}</span>
+    </div>
+
+    <div class="detail-grid">
+        <div class="product-image-panel" style="color:{{ product.color }}">
+            <i class="fa-solid {{ product.icon }}"></i>
+        </div>
+
+        <div class="product-info-panel">
+            <span class="cat-badge">{{ product.category.name }}</span>
+            <h1>{{ product.name }}</h1>
+
+            <div class="rating-row">
+                <div class="stars">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= product.rating %}
+                            <i class="fa-solid fa-star"></i>
+                        {% else %}
+                            <i class="fa-regular fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <span class="review-count">{{ product.rating }} ({{ product.reviews }} reviews)</span>
+            </div>
+
+            <div class="price-row">
+                <span class="price">${{ product.display_price }}</span>
+                {% if product.display_original_price %}<span class="orig-price">${{ product.display_original_price }}</span>{% endif %}
+                {% if savings %}<span class="save-tag">Save ${{ savings }}</span>{% endif %}
+            </div>
+
+            <p class="description">{{ product.description }}</p>
+
+            <div class="features">
+                <h3>Key Features</h3>
+                {% for feat in product.features %}
+                <div class="feature-item">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>{{ feat }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="qty-row">
+                <span class="qty-label">Quantity</span>
+                <div class="qty-control">
+                    <button type="button" class="qty-btn" onclick="changeQty(-1)">&minus;</button>
+                    <span class="qty-val" id="qtyVal">1</span>
+                    <button type="button" class="qty-btn" onclick="changeQty(1)">+</button>
+                </div>
+                <span class="stock-note"><span>{{ product.stock }} in stock</span></span>
+            </div>
+
+            <div class="cta-row">
+                <button type="button" class="btn-primary" id="addToCartBtn" {% if not product.in_stock %}disabled{% endif %} onclick="addToCart()">
+                    <i class="fa-solid fa-cart-plus"></i> Add to Cart
+                </button>
+                <a href="/cart/" class="btn-secondary">
+                    <i class="fa-solid fa-bag-shopping"></i> View Cart
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="related-section">
+        <h2>You might also like</h2>
+        <div class="related-grid">
+            {% for p in related %}
+            <a href="{{ p.get_absolute_url }}" class="related-card">
+                <div class="related-icon" style="background:{{ p.color }}15;color:{{ p.color }}">
+                    <i class="fa-solid {{ p.icon }}"></i>
+                </div>
+                <h4>{{ p.name }}</h4>
+                <span class="rprice">${{ p.price }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+
+<div class="toast" id="toast">Added to cart!</div>
+
+<script>
+let qty = 1;
+const maxStock = {{ product.stock }};
+const productId = {{ product.id }};
+
+function changeQty(delta) {
+    qty = Math.max(1, Math.min(maxStock, qty + delta));
+    document.getElementById('qtyVal').textContent = qty;
+}
+
+async function addToCart() {
+    const btn = document.getElementById('addToCartBtn');
+    btn.disabled = true;
+    try {
+        const res = await fetch('/api/cart/add/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ product_id: productId, quantity: qty })
+        });
+        const data = await res.json();
+        if (data.success) {
+            updateCartBadge(data.cart_count);
+            showToast();
+        }
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+function updateCartBadge(count) {
+    const badge = document.getElementById('cartBadge');
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'flex' : 'none';
+}
+
+function showToast() {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Store - AI-Powered E-Commerce</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-navbar: rgba(15, 23, 42, 0.85);
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-light: rgba(255, 255, 255, 0.1);
+            --glass-bg: rgba(15, 23, 42, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body {
+            min-height: 100vh;
+            color: var(--text-light);
+            background-color: var(--bg-dark);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0, transparent 50%);
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 70px;
+            padding: 0 5%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-navbar);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-light);
+            z-index: 100;
+        }
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .nav-links { display: flex; gap: 2rem; align-items: center; }
+        .nav-links a { color: var(--text-light); text-decoration: none; font-weight: 500; transition: color 0.3s; }
+        .nav-links a:hover { color: var(--primary); }
+        .cart-link { position: relative; }
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -10px;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #fff;
+            background: var(--primary);
+        }
+        main { padding: 100px 5% 50px; }
+        .hero { text-align: center; margin-bottom: 4rem; }
+        .hero h1 { font-size: 3rem; margin-bottom: 1rem; font-weight: 700; }
+        .hero p { max-width: 600px; margin: 0 auto; color: var(--text-muted); font-size: 1.1rem; }
+        .products { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; padding: 2rem 0; }
+        .product-card {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1.5rem;
+            border-radius: 16px;
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s;
+        }
+        .product-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+        .product-img {
+            width: 100%;
+            height: 180px;
+            margin-bottom: 0.5rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+        .product-info h3 { font-size: 1.15rem; margin-bottom: 0.4rem; }
+        .product-info .cat { margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
+        .product-info p { color: var(--text-muted); font-size: 0.9rem; }
+        .product-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        .price-block .price { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+        .price-block .orig { margin-left: 6px; font-size: 0.85rem; color: var(--text-muted); text-decoration: line-through; }
+        .btn-add {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #fff;
+            background: var(--primary);
+            transition: background 0.3s, transform 0.2s;
+        }
+        .btn-add:hover { background: var(--primary-hover); transform: scale(1.03); }
+        .chat-widget {
+            position: fixed;
+            right: 30px;
+            bottom: 30px;
+            width: 380px;
+            height: 550px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(16px);
+            transform: translateY(120%) scale(0.9);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(.175, .885, .32, 1.275), opacity 0.4s ease;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        .chat-widget.active { transform: translateY(0) scale(1); opacity: 1; pointer-events: all; }
+        .chat-header {
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .chat-title { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 1.05rem; }
+        .chat-title i { color: #ec4899; }
+        .chat-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; transition: color 0.3s; }
+        .chat-close:hover { color: var(--text-light); }
+        .chat-body {
+            flex-grow: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .message {
+            max-width: 85%;
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .message.bot { align-self: flex-start; background: rgba(255, 255, 255, 0.05); border-bottom-left-radius: 4px; }
+        .message.user { align-self: flex-end; background: linear-gradient(135deg, var(--primary), #8b5cf6); border-bottom-right-radius: 4px; }
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border-bottom-left-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .typing-indicator.active { display: flex; }
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        .chat-footer { padding: 1rem; display: flex; gap: 0.5rem; border-top: 1px solid var(--glass-border); }
+        .chat-input {
+            flex-grow: 1;
+            padding: 0.8rem 1rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            outline: none;
+            font-size: 0.95rem;
+            background: rgba(0, 0, 0, 0.2);
+            transition: border-color 0.3s;
+        }
+        .chat-input:focus { border-color: var(--primary); }
+        .chat-submit {
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #fff;
+            background: var(--primary);
+            transition: transform 0.2s, background 0.3s;
+        }
+        .chat-submit:hover { background: var(--primary-hover); transform: scale(1.05); }
+        .chat-toggle {
+            position: fixed;
+            right: 30px;
+            bottom: 30px;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #fff;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--primary), #ec4899);
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
+            transition: transform 0.3s cubic-bezier(.175, .885, .32, 1.275);
+            z-index: 999;
+        }
+        .chat-toggle:hover { transform: scale(1.1); }
+        @media (max-width: 640px) {
+            .hero h1 { font-size: 2.3rem; }
+            .chat-widget { left: 16px; right: 16px; bottom: 90px; width: auto; height: 65vh; }
+            .chat-toggle { right: 16px; bottom: 16px; }
+        }
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/" class="brand"><i class="fa-solid fa-cube"></i> Nexus Store</a>
+    <div class="nav-links">
+        <a href="/">Shop</a>
+        <a href="/cart/" class="cart-link">
+            <i class="fa-solid fa-cart-shopping"></i> Cart
+            <span class="cart-badge" id="cartBadge" {% if not cart_count %}style="display:none"{% endif %}>{{ cart_count }}</span>
+        </a>
+    </div>
+</nav>
+
+<main>
+    <section class="hero">
+        <h1>Discover the extraordinary</h1>
+        <p>Powered by our advanced AI recommendation engine, find perfectly tailored products curated just for you.</p>
+    </section>
+
+    <section class="products">
+        {% for product in products %}
+        <a class="product-card" href="{{ product.get_absolute_url }}" id="product-{{ product.id }}">
+            <div class="product-img" style="background:linear-gradient(135deg,{{ product.color }}22,{{ product.color }}08);color:{{ product.color }}">
+                <i class="fa-solid {{ product.icon }}"></i>
+            </div>
+            <div class="product-info">
+                <div class="cat">{{ product.category.name }}</div>
+                <h3>{{ product.name }}</h3>
+                <p>{{ product.short_desc }}</p>
+            </div>
+            <div class="product-footer">
+                <div class="price-block">
+                    <span class="price">${{ product.display_price }}</span>
+                    {% if product.display_original_price %}<span class="orig">${{ product.display_original_price }}</span>{% endif %}
+                </div>
+                <button type="button" class="btn-add" {% if not product.in_stock %}disabled{% endif %} onclick="event.preventDefault(); addToCart({{ product.id }})">
+                    <i class="fa-solid fa-cart-plus"></i> Add
+                </button>
+            </div>
+        </a>
+        {% endfor %}
+    </section>
+</main>
+
+<button type="button" class="chat-toggle" id="chatOpenBtn"><i class="fa-solid fa-sparkles"></i></button>
+<div class="chat-widget" id="chatWidget">
+    <div class="chat-header">
+        <div class="chat-title"><i class="fa-solid fa-robot"></i> AI Shopping Assistant</div>
+        <button type="button" class="chat-close" id="chatCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="chat-body" id="chatBody">
+        <div class="message bot">Hi! I am your AI assistant. Ask me anything about products or recommendations.</div>
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+    <form class="chat-footer" id="chatForm">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Ask about products..." autocomplete="off">
+        <button type="submit" class="chat-submit"><i class="fa-solid fa-paper-plane"></i></button>
+    </form>
+</div>
+
+<script>
+async function addToCart(productId) {
+    const res = await fetch('/api/cart/add/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ product_id: productId, quantity: 1 })
+    });
+    const data = await res.json();
+    if (data.success) {
+        updateCartBadge(data.cart_count);
+    }
+}
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+function updateCartBadge(count) {
+    const badge = document.getElementById('cartBadge');
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'flex' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const chatWidget = document.getElementById('chatWidget');
+    const chatOpenBtn = document.getElementById('chatOpenBtn');
+    const chatCloseBtn = document.getElementById('chatCloseBtn');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const chatBody = document.getElementById('chatBody');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    chatOpenBtn.addEventListener('click', () => chatWidget.classList.add('active'));
+    chatCloseBtn.addEventListener('click', () => chatWidget.classList.remove('active'));
+
+    function addMessage(text, sender) {
+        const message = document.createElement('div');
+        message.className = `message ${sender}`;
+        message.textContent = text;
+        chatBody.insertBefore(message, typingIndicator);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    chatForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const msg = chatInput.value.trim();
+        if (!msg) {
+            return;
+        }
+
+        addMessage(msg, 'user');
+        chatInput.value = '';
+        typingIndicator.classList.add('active');
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        try {
+            const res = await fetch('/api/chat/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify({ message: msg })
+            });
+            const data = await res.json();
+            typingIndicator.classList.remove('active');
+            addMessage(res.ok ? data.response : `Error: ${data.error}`, 'bot');
+        } catch {
+            typingIndicator.classList.remove('active');
+            addMessage('Connection error. Please try again.', 'bot');
+        }
+    });
+});
+</script>
+</body>
+</html>

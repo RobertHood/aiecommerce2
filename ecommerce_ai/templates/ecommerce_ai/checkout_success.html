@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed - Nexus Store</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.72);
+            --primary: #6366f1;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-light: rgba(255, 255, 255, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 2rem;
+            color: var(--text-light);
+            background-color: var(--bg-dark);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.13) 0, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.12) 0, transparent 50%);
+        }
+        .card {
+            max-width: 560px;
+            width: 100%;
+            padding: 2.5rem;
+            text-align: center;
+            border-radius: 24px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+        }
+        .icon {
+            width: 84px;
+            height: 84px;
+            margin: 0 auto 1.5rem;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.12);
+            font-size: 2.4rem;
+        }
+        h1 { margin-bottom: 0.8rem; font-size: 2rem; }
+        p { color: var(--text-muted); line-height: 1.7; }
+        .order-meta { margin-top: 1.2rem; display: grid; gap: 0.4rem; color: var(--text-light); }
+        .order-meta strong { color: #10b981; }
+        .actions { margin-top: 2rem; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+        .btn { padding: 0.95rem 1.4rem; border-radius: 12px; text-decoration: none; font-weight: 600; }
+        .btn-primary { color: #fff; background: linear-gradient(135deg, var(--primary), #8b5cf6); }
+        .btn-secondary { color: var(--text-light); border: 1px solid var(--border-light); background: rgba(255, 255, 255, 0.04); }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon"><i class="fa-solid fa-circle-check"></i></div>
+        <h1>Order confirmed</h1>
+        <p>Your order has been placed successfully. We have cleared your cart and your items are now being prepared for shipment.</p>
+        <div class="order-meta">
+            <span>Order number: <strong>#{{ order.id }}</strong></span>
+            <span>Total: <strong>${{ order.total }}</strong></span>
+        </div>
+        <div class="actions">
+            <a href="/" class="btn btn-primary">Continue Shopping</a>
+            <a href="/cart/" class="btn btn-secondary">View Cart</a>
+        </div>
+    </div>
+</body>
+</html>
