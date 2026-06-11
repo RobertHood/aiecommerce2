@@ -1,0 +1,8 @@
+[12/Jun/2026 04:29:16] "GET /health/ HTTP/1.1" 200 59
+[12/Jun/2026 04:29:16] "POST /api/chat/ HTTP/1.1" 200 397
+[12/Jun/2026 04:29:16,870] - Broken pipe from ('127.0.0.1', 64018)
+[12/Jun/2026 04:29:16,891] - Broken pipe from ('127.0.0.1', 64016)
+[12/Jun/2026 04:29:40] "POST /api/chat/ HTTP/1.1" 200 187
+[12/Jun/2026 04:29:40] "POST /api/chat/ HTTP/1.1" 200 397
+[12/Jun/2026 04:29:40,694] - Broken pipe from ('127.0.0.1', 51611)
+[12/Jun/2026 04:29:40,707] - Broken pipe from ('127.0.0.1', 51610)

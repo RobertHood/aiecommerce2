@@ -1,5 +1,53 @@
 # AI E-Commerce 2
 
+## Update: catalog data and AI chatbot
+
+The store now seeds 14 electronics products across 10 categories in both databases:
+
+- Main storefront database: `ecommerce_ai/migrations/0002_seed_initial_catalog.py` and `0003_seed_more_electronics.py`
+- Catalog microservice database: `services/catalog_service/catalog/migrations/0002_seed_initial_catalog.py` and `0003_seed_more_electronics.py`
+
+The AI service now has a catalog-aware chatbot fallback in:
+
+```text
+services/ai_service/assistant/catalog_qa.py
+```
+
+How it works:
+
+- The AI service reads product data from `CATALOG_SERVICE_URL/api/products/`.
+- In Docker, `CATALOG_SERVICE_URL=http://catalog:8001` is configured for the AI container.
+- If the catalog service is not running, the chatbot uses an internal fallback copy of the seeded catalog.
+- It can answer product list, category, price, stock, feature, budget, premium, and recommendation questions without requiring Groq or Neo4j.
+
+Run locally:
+
+```powershell
+python manage.py migrate
+cd services/catalog_service
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8001
+```
+
+In another terminal:
+
+```powershell
+cd services/ai_service
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8004
+```
+
+Sample chatbot prompts:
+
+```text
+What products do you have?
+Show me cheap products
+Recommend a gaming product
+Price of DevStation X1
+What audio products are in stock?
+Which product is good for smart home security?
+```
+
 Đây là một dự án Django mô phỏng website thương mại điện tử có giao diện bán hàng, giỏ hàng theo session, trang thanh toán, chatbot AI và phần thử nghiệm hệ thống gợi ý dựa trên dữ liệu hành vi người dùng. Codebase kết hợp 3 phần chính:
 
 - Ứng dụng web Django hiển thị cửa hàng `Nexus Store`.
@@ -20,6 +68,43 @@
 - LangChain Neo4j
 - LangChain Groq
 - Docker và Docker Compose
+
+## Kiến trúc hiện tại sau refactor microservices
+
+Project đã được chuyển theo hướng microservice từng bước. Storefront Django hiện đóng vai trò Backend-for-Frontend (BFF), còn các domain chính được tách thành service riêng:
+
+- `web` / storefront: render giao diện, giữ session cart, gọi các service qua HTTP khi bật `USE_MICROSERVICES=1`.
+- `catalog_service`: sở hữu dữ liệu `Category`, `Product`, tồn kho và API catalog.
+- `order_service`: sở hữu dữ liệu `Order`, `OrderItem`, tạo đơn hàng và gọi `catalog_service` để reserve stock.
+- `user_service`: sở hữu dữ liệu khách hàng/người dùng, đăng ký, đăng nhập cơ bản và hồ sơ người dùng.
+- `ai_service`: sở hữu API chatbot/RAG, kết nối Neo4j và Groq, lưu log câu hỏi.
+- `payment_service`: sở hữu dữ liệu thanh toán, tạo và xác nhận payment cho đơn hàng.
+- `product_service`: sở hữu dữ liệu kho hàng, inventory item và stock movement.
+- `shipping_service`: sở hữu đối tác vận chuyển, shipment và lộ trình giao nhận.
+- `neo4j`: graph database phục vụ AI/RAG chatbot.
+
+Mô hình:
+
+```text
+Browser
+  |
+  v
+Storefront / BFF (Django :8000)
+  |-- HTTP --> Catalog Service (Django :8001, catalog DB)
+  |-- HTTP --> Order Service   (Django :8002, order DB)
+  |-- HTTP --> User Service    (Django :8003, user DB)
+  |-- HTTP --> AI Service      (Django :8004, AI DB, Neo4j/Groq)
+  |-- HTTP --> Payment Service (Django :8005, payment DB)
+  |-- HTTP --> Product Service (Django :8006, inventory DB)
+  `-- HTTP --> Shipping Service (Django :8007, shipping DB)
+```
+
+Storefront vẫn có fallback ORM local để dễ phát triển và test:
+
+```text
+USE_MICROSERVICES=0  # chạy kiểu monolith/local ORM
+USE_MICROSERVICES=1  # chạy kiểu microservices qua HTTP
+```
 
 ## Cấu trúc thư mục
 
@@ -53,8 +138,286 @@ aiecommerce2/
 |-- requirements.txt               # Danh sách thư viện Python chính
 |-- Dockerfile                     # Image cho Django app
 |-- docker-compose.yml             # Chạy Django + Neo4j
+|-- services/
+|   |-- catalog_service/           # Microservice quản lý catalog và tồn kho
+|   |-- order_service/             # Microservice quản lý đơn hàng
+|   |-- user_service/              # Microservice quản lý người dùng
+|   |-- ai_service/                # Microservice chatbot/RAG
+|   |-- payment_service/           # Microservice thanh toán
+|   |-- product_service/           # Microservice quản lý kho hàng
+|   `-- shipping_service/          # Microservice vận chuyển/giao nhận
+|-- api-gateway/                   # Tài liệu API gateway và nginx route mẫu
 |-- manage.py                      # Django management script
 `-- BaoCao_HeThongDeXuat.tex       # Báo cáo LaTeX về hệ thống đề xuất
+```
+
+## Microservice Catalog
+
+Thư mục:
+
+```text
+services/catalog_service/
+```
+
+Service này sở hữu dữ liệu:
+
+- `Category`
+- `Product`
+
+Các API chính:
+
+| Endpoint | Method | Chức năng |
+| --- | --- | --- |
+| `/health/` | GET | Kiểm tra service sống |
+| `/api/categories/` | GET | Danh sách danh mục |
+| `/api/products/` | GET | Danh sách sản phẩm |
+| `/api/products/<id>/` | GET | Chi tiết sản phẩm |
+| `/api/stock/reserve/` | POST | Trừ/reserve tồn kho khi tạo đơn |
+
+Chạy riêng:
+
+```bash
+cd services/catalog_service
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8001
+```
+
+## Microservice Order
+
+Thư mục:
+
+```text
+services/order_service/
+```
+
+Service này sở hữu dữ liệu:
+
+- `Order`
+- `OrderItem`
+
+Các API chính:
+
+| Endpoint | Method | Chức năng |
+| --- | --- | --- |
+| `/health/` | GET | Kiểm tra service sống |
+| `/api/orders/` | POST | Tạo đơn hàng |
+| `/api/orders/<id>/` | GET | Xem chi tiết đơn |
+
+Khi tạo đơn, `order_service` gọi sang `catalog_service` để reserve stock, thay vì truy cập trực tiếp database catalog. Đây là nguyên tắc quan trọng của microservices: service chỉ giao tiếp qua API.
+
+Chạy riêng:
+
+```bash
+cd services/order_service
+set CATALOG_SERVICE_URL=http://127.0.0.1:8001
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8002
+```
+
+## Microservice User
+
+Thư mục:
+
+```text
+services/user_service/
+```
+
+Service này sở hữu dữ liệu:
+
+- `Customer`
+
+Các trường chính của `Customer`:
+
+- `email`
+- `password_hash`
+- `full_name`
+- `phone`
+- `address`
+- `city`
+- `postal_code`
+- `role`
+- `is_active`
+
+Các API chính:
+
+| Endpoint | Method | Chức năng |
+| --- | --- | --- |
+| `/health/` | GET | Kiểm tra service sống |
+| `/api/users/` | GET | Danh sách người dùng |
+| `/api/users/` | POST | Đăng ký người dùng |
+| `/api/users/login/` | POST | Đăng nhập cơ bản |
+| `/api/users/<id>/` | GET | Xem hồ sơ người dùng |
+| `/api/users/<id>/` | PATCH/PUT | Cập nhật hồ sơ/trạng thái |
+
+Ví dụ đăng ký:
+
+```json
+{
+  "email": "customer@example.com",
+  "password": "secret123",
+  "full_name": "Nguyen Van A",
+  "phone": "0900000000",
+  "address": "123 Market Street",
+  "city": "Bangkok",
+  "postal_code": "10110"
+}
+```
+
+Chạy riêng:
+
+```bash
+cd services/user_service
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8003
+```
+
+## Microservice AI
+
+Thư mục:
+
+```text
+services/ai_service/
+```
+
+Service này tách phần chatbot/RAG ra khỏi storefront. Nó dùng lại logic trong `rag_chat.py`, kết nối Neo4j và Groq, đồng thời lưu log câu hỏi vào model `ChatLog`.
+
+Các API chính:
+
+| Endpoint | Method | Chức năng |
+| --- | --- | --- |
+| `/health/` | GET | Kiểm tra service sống |
+| `/api/chat/` | POST | Gửi câu hỏi đến chatbot/RAG |
+
+Ví dụ request:
+
+```json
+{
+  "message": "Which products are popular?"
+}
+```
+
+Chạy riêng:
+
+```bash
+cd services/ai_service
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8004
+```
+
+## Microservice Payment
+
+Thư mục:
+
+```text
+services/payment_service/
+```
+
+Service này sở hữu model `Payment`, quản lý thông tin thanh toán theo đơn hàng. Hiện tại service mô phỏng payment flow cơ bản, phù hợp cho giai đoạn MVP trước khi tích hợp cổng thanh toán thật.
+
+Các API chính:
+
+| Endpoint | Method | Chức năng |
+| --- | --- | --- |
+| `/health/` | GET | Kiểm tra service sống |
+| `/api/payments/` | POST | Tạo payment |
+| `/api/payments/<id>/` | GET | Xem chi tiết payment |
+| `/api/payments/<id>/confirm/` | POST | Xác nhận payment thành công |
+| `/api/payments/<id>/fail/` | POST | Đánh dấu payment thất bại |
+
+Ví dụ tạo payment:
+
+```json
+{
+  "order_id": 1,
+  "amount": "2157.84",
+  "customer_email": "customer@example.com",
+  "method": "cod",
+  "currency": "USD"
+}
+```
+
+Chạy riêng:
+
+```bash
+cd services/payment_service
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8005
+```
+
+## Microservice Product/Inventory
+
+Thư mục:
+
+```text
+services/product_service/
+```
+
+Service này quản lý hàng hóa trong kho, tách khỏi catalog bán hàng. Catalog trả dữ liệu sản phẩm để hiển thị, còn Product/Inventory service theo dõi hàng hóa thực tế trong warehouse.
+
+Model chính:
+
+- `Warehouse`
+- `InventoryItem`
+- `StockMovement`
+
+API chính:
+
+| Endpoint | Method | Chức năng |
+| --- | --- | --- |
+| `/health/` | GET | Kiểm tra service sống |
+| `/api/warehouses/` | GET/POST | Danh sách/tạo kho |
+| `/api/inventory/` | GET/POST | Danh sách/tạo hàng hóa trong kho |
+| `/api/inventory/<id>/` | GET | Chi tiết tồn kho |
+| `/api/inventory/<id>/adjust/` | POST | Điều chỉnh tồn kho |
+| `/api/inventory/<id>/reserve/` | POST | Reserve hàng hóa |
+| `/api/inventory/<id>/release/` | POST | Hoàn reserve |
+| `/api/movements/` | GET | Lịch sử biến động kho |
+
+Admin của service này hiển thị kho, item tồn kho và stock movement ngay trên trang admin của Product service.
+
+Chạy riêng:
+
+```bash
+cd services/product_service
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8006
+```
+
+## Microservice Shipping
+
+Thư mục:
+
+```text
+services/shipping_service/
+```
+
+Service này điều phối đối tác vận chuyển và lộ trình giao nhận.
+
+Model chính:
+
+- `Carrier`
+- `Shipment`
+- `RouteEvent`
+
+API chính:
+
+| Endpoint | Method | Chức năng |
+| --- | --- | --- |
+| `/health/` | GET | Kiểm tra service sống |
+| `/api/carriers/` | GET/POST | Danh sách/tạo đối tác vận chuyển |
+| `/api/shipments/` | GET/POST | Danh sách/tạo shipment |
+| `/api/shipments/<id>/` | GET | Chi tiết shipment và lộ trình |
+| `/api/shipments/<id>/assign/` | POST | Gán đối tác vận chuyển |
+| `/api/shipments/<id>/events/` | POST | Thêm trạng thái/lộ trình giao nhận |
+
+Admin của service này hiển thị carrier, shipment và route event ngay trên trang admin của Shipping service.
+
+Chạy riêng:
+
+```bash
+cd services/shipping_service
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8007
 ```
 
 ## Luồng chính của website
@@ -581,6 +944,48 @@ Django app chạy tại:
 http://localhost:8000/
 ```
 
+Catalog service chạy tại:
+
+```text
+http://localhost:8001/
+```
+
+Order service chạy tại:
+
+```text
+http://localhost:8002/
+```
+
+User service chạy tại:
+
+```text
+http://localhost:8003/
+```
+
+AI service chạy tại:
+
+```text
+http://localhost:8004/
+```
+
+Payment service chạy tại:
+
+```text
+http://localhost:8005/
+```
+
+Product/Inventory service chạy tại:
+
+```text
+http://localhost:8006/
+```
+
+Shipping service chạy tại:
+
+```text
+http://localhost:8007/
+```
+
 Neo4j Browser chạy tại:
 
 ```text
@@ -615,6 +1020,19 @@ NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=password
 GROQ_API_KEY=your-groq-api-key
+```
+
+Các biến môi trường liên quan đến microservices:
+
+```text
+USE_MICROSERVICES=1
+CATALOG_SERVICE_URL=http://catalog:8001
+ORDER_SERVICE_URL=http://orders:8002
+USER_SERVICE_URL=http://users:8003
+AI_SERVICE_URL=http://ai:8004
+PAYMENT_SERVICE_URL=http://payments:8005
+PRODUCT_SERVICE_URL=http://products:8006
+SHIPPING_SERVICE_URL=http://shipping:8007
 ```
 
 Trong `docker-compose.yml`, các biến này được truyền vào service `web`.

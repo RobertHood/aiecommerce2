@@ -232,6 +232,11 @@
             <i class="fa-solid fa-cart-shopping"></i> Cart
             <span class="cart-badge" id="cartBadge" {% if not cart_count %}style="display:none"{% endif %}>{{ cart_count }}</span>
         </a>
+        {% if customer %}
+            <a href="/account/"><i class="fa-solid fa-user"></i> {{ customer.full_name }}</a>
+        {% else %}
+            <a href="/login/">Login</a>
+        {% endif %}
     </div>
 </nav>
 

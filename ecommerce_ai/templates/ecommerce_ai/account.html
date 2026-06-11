@@ -1,0 +1,23 @@
+{% extends "ecommerce_ai/auth_base.html" %}
+
+{% block title %}Account - Nexus Store{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <h1>My Account</h1>
+    <p class="lead">Profile data below is loaded from the User Service.</p>
+    {% if profile %}
+    <div class="profile-grid">
+        <div class="profile-row"><span>User ID</span><strong>#{{ profile.id }}</strong></div>
+        <div class="profile-row"><span>Name</span><strong>{{ profile.full_name }}</strong></div>
+        <div class="profile-row"><span>Email</span><strong>{{ profile.email }}</strong></div>
+        <div class="profile-row"><span>Phone</span><strong>{{ profile.phone|default:"-" }}</strong></div>
+        <div class="profile-row"><span>Address</span><strong>{{ profile.address|default:"-" }}</strong></div>
+        <div class="profile-row"><span>City</span><strong>{{ profile.city|default:"-" }}</strong></div>
+        <div class="profile-row"><span>Postal code</span><strong>{{ profile.postal_code|default:"-" }}</strong></div>
+        <div class="profile-row"><span>Role</span><strong>{{ profile.role }}</strong></div>
+    </div>
+    {% endif %}
+    <a href="/logout/" class="btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>
+</section>
+{% endblock %}

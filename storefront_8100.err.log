@@ -1,0 +1,24 @@
+http://127.0.0.1:8101 : The term 'http://127.0.0.1:8101' is not recognized as the name of a cmdlet, function, script 
+file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct 
+and try again.
+At line:1 char:52
++ ... CROSERVICES=1; $env:CATALOG_SERVICE_URL=http://127.0.0.1:8101; $env:O ...
++                                             ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (http://127.0.0.1:8101:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+http://127.0.0.1:8102 : The term 'http://127.0.0.1:8102' is not recognized as the name of a cmdlet, function, script 
+file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct 
+and try again.
+At line:1 char:98
++ ... /127.0.0.1:8101; $env:ORDER_SERVICE_URL=http://127.0.0.1:8102; cd c:\ ...
++                                             ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (http://127.0.0.1:8102:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+[12/Jun/2026 00:57:41] "GET / HTTP/1.1" 500 145
+[12/Jun/2026 00:57:41,519] - Broken pipe from ('127.0.0.1', 51950)
+[12/Jun/2026 00:57:57] "GET / HTTP/1.1" 500 145
+[12/Jun/2026 00:57:57,251] - Broken pipe from ('127.0.0.1', 63922)
+[12/Jun/2026 00:58:18] "GET / HTTP/1.1" 500 145
+[12/Jun/2026 00:58:18,462] - Broken pipe from ('127.0.0.1', 60933)

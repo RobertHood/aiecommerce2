@@ -1,0 +1,402 @@
+--- PAGE 1 ---
+ 
+HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG 
+Khoa Công nghệ thông tin 
+------------------- 
+ 
+ 
+ 
+ 
+ 
+TIỂU LUẬN SoAD 
+Kiến trúc và Thiết kế Phần mềm 
+ 
+ 
+Giảng viên: Trần Đình Quế 
+Họ và tên: Trần Tuấn Cường 
+Mã SV: B22DCVT073 
+Lớp: E22CNPM02 
+Nhóm: 01 
+ 
+ 
+Hà Nội, 2026 
+
+--- PAGE 2 ---
+1 
+ 
+Mục Lục 
+1. Chương 1 Từ Monolithic đến Microservices và DDD ........................................................... 5 
+1.1 Giới thiệu Monolithic Architecture ............................................................................... 5 
+1.1.1 Khái niệm .............................................................................................................. 5 
+1.1.2 Cấu trúc điển hình ................................................................................................. 5 
+1.1.3 Ví dụ thực tế .......................................................................................................... 5 
+1.1.4 Nhược điểm chi tiết ............................................................................................... 6 
+1.1.5 Khi nào nên dùng Monolithic ................................................................................. 8 
+1.2 Microservices Architecture .......................................................................................... 9 
+1.2.1 Khái niệm .............................................................................................................. 9 
+1.2.2 Đặc điểm .............................................................................................................. 10 
+1.2.3 So sánh Monolithic vs Microservices ................................................................... 12 
+1.2.4 Ưu điểm ............................................................................................................... 13 
+1.2.5 Nhược điểm ......................................................................................................... 14 
+1.2.6 Nguyên tắc thiết kế .............................................................................................. 16 
+1.3 Domain Driven Design (DDD) ...................................................................................... 17 
+1.3.1 Mục tiêu ............................................................................................................... 17 
+1.3.2 Các khái niệm cốt lõi ............................................................................................ 18 
+1.3.3 Context Map ......................................................................................................... 19 
+1.3.4 DDD trong Microservices ..................................................................................... 21 
+1.4 Quá trình chuyển đổi Microservices tại các Big Tech .................................................. 22 
+1.5 Case Study: Healthcare (Luyện Decomposition) ........................................................ 23 
+1.5.1 Mô tả bài toán ....................................................................................................... 23 
+1.5.2 Bước 1: Xác định Domain ..................................................................................... 24 
+1.5.3 Bước 2: Xác định Bounded Context ...................................................................... 25 
+1.5.4 Bước 3: Phân rã thành Microservices ................................................................... 26 
+1.5.5 Bước 4: Xác định quan hệ ..................................................................................... 27 
+1.5.6 Ví dụ API ............................................................................................................... 31 
+1.6 Kết luận ....................................................................................................................... 34 
+2. Chương 2 Phát triển Hệ E-Commerce Microservices ......................................................... 35 
+2.1 Xác định yêu cầu ......................................................................................................... 35 
+2.1.1 Functional Requirements .................................................................................... 35 
+2.1.2 Non-functional Requirements ............................................................................. 36 
+2.2 Phân rã hệ thống theo DDD ......................................................................................... 37 
+--- PAGE 3 ---
+2 
+ 
+2.2.1 Bounded Context ................................................................................................. 37 
+2.2.2 Nguyên tắc ........................................................................................................... 38 
+2.3 Thiết kế Product Service (Django) ............................................................................... 38 
+2.3.1 Phân loại sản phẩm .............................................................................................. 38 
+2.3.2 Model tổng quát ................................................................................................... 39 
+2.3.3 Chi tiết theo domain ............................................................................................. 39 
+2.3.4 API ........................................................................................................................ 42 
+2.4 Thiết kế User Service (Django) ..................................................................................... 45 
+2.4.1 Phân loại người dùng ............................................................................................ 45 
+2.4.2 Model ................................................................................................................... 48 
+2.4.3 Phân quyền (RBAC) .............................................................................................. 48 
+2.4.4 API ........................................................................................................................ 49 
+2.5 Thiết kế Cart Service ................................................................................................... 65 
+2.5.1 Model ................................................................................................................... 65 
+2.5.2 Logic ..................................................................................................................... 65 
+2.5.3 API ........................................................................................................................ 67 
+2.6 Thiết kế Order Service ................................................................................................. 68 
+2.6.1 Model ................................................................................................................... 68 
+2.6.2 Workflow .............................................................................................................. 69 
+2.7 Thiết kế Payment Service ............................................................................................ 71 
+2.7.1 Model ................................................................................................................... 71 
+2.7.2 Trạng thái ............................................................................................................. 71 
+2.7.3 API ........................................................................................................................ 71 
+2.8 Thiết kế Shipping Service ............................................................................................ 72 
+2.8.1 Model ................................................................................................................... 72 
+2.8.2 Trạng thái ............................................................................................................. 73 
+2.8.3 API ........................................................................................................................ 73 
+2.9 Luồng hệ thống tổng thể .............................................................................................. 74 
+2.10 Thực hành ................................................................................................................ 76 
+2.10.1 Mục tiêu ............................................................................................................... 76 
+2.10.2 Class Diagram ...................................................................................................... 76 
+2.10.3 Mapping Class Diagram sang Database ............................................................... 83 
+2.10.4 Thiết kế Database cho từng Service ..................................................................... 86 
+2.10.5 So sánh MySQL vs PostgreSQL ............................................................................. 89 
+--- PAGE 4 ---
+3 
+ 
+2.11 Kết luận ................................................................................................................... 90 
+3. Chương 3 AI Service cho tư vấn sản phẩm ......................................................................... 91 
+3.1 Mục tiêu ...................................................................................................................... 91 
+3.2 Kiến trúc AI Service ..................................................................................................... 92 
+3.3 Thu thập dữ liệu .......................................................................................................... 93 
+3.3.1 User Behavior Data .............................................................................................. 93 
+3.3.2 Ví dụ dataset ........................................................................................................ 94 
+3.4 Mô hình LSTM (Sequence Modeling) ............................................................................ 94 
+3.4.1 Ý tưởng ................................................................................................................. 94 
+3.4.2 Model chi tiết ....................................................................................................... 95 
+3.4.3 Training ................................................................................................................ 96 
+3.5 Knowledge Graph với Neo4j ........................................................................................ 97 
+3.5.1 Mô hình đồ thị ....................................................................................................... 97 
+3.5.2 Ví dụ Cypher ......................................................................................................... 99 
+3.5.3 Truy vấn gợi ý ...................................................................................................... 100 
+3.6 RAG (Retrieval-Augmented Generation) .................................................................... 100 
+3.6.1 Pipeline .............................................................................................................. 100 
+3.6.2 Vector Database ................................................................................................ 101 
+3.6.3 Ví dụ ................................................................................................................... 101 
+3.7 Kết hợp Hybrid Model ................................................................................................ 102 
+3.8 Hai dạng AI Service ................................................................................................... 103 
+3.8.1 Recommendation List ........................................................................................ 103 
+3.8.2 Chatbot tư vấn ................................................................................................... 105 
+3.9 Triển khai AI Service .................................................................................................. 107 
+3.9.1 Tech stack .......................................................................................................... 107 
+3.9.2 Kiến trúc ............................................................................................................. 108 
+3.10 Kết luận ................................................................................................................. 108 
+4. Chương 4 Xây dựng hệ thống hoàn chỉnh ......................................................................... 109 
+4.1 Kiến trúc tổng thể ...................................................................................................... 109 
+4.1.1 Mô hình hệ thống ................................................................................................... 109 
+4.1.2 Nguyên tắc ............................................................................................................. 111 
+4.2 System Architecture ................................................................................................. 112 
+4.2.1 Overview ............................................................................................................ 112 
+4.2.2 Microservice Architecture ................................................................................. 113 
+--- PAGE 5 ---
+4 
+ 
+4.2.3 API Gateway ....................................................................................................... 113 
+4.2.4 Service Communication .................................................................................... 114 
+4.2.5 Containerization and Deployment ..................................................................... 114 
+4.2.6 System Structure ............................................................................................... 115 
+4.2.7 Design Principles ............................................................................................... 115 
+4.2.8 Security Considerations .................................................................................... 116 
+4.2.9 Discussion ......................................................................................................... 116 
+4.3 API Gateway (Nginx) .................................................................................................. 116 
+4.3.1 Vai trò ................................................................................................................. 116 
+4.3.2 Cấu hình mẫu ..................................................................................................... 116 
+4.4 Authentication (JWT) ................................................................................................. 117 
+4.4.1 Cài đặt ................................................................................................................ 117 
+4.4.2 Cấu hình ............................................................................................................. 117 
+4.4.3 Luồng ................................................................................................................. 118 
+4.5 Giao tiếp giữa các Service ......................................................................................... 118 
+4.5.1 REST API call ...................................................................................................... 118 
+4.5.2 Best Practice ...................................................................................................... 119 
+4.6 Docker hóa hệ thống ................................................................................................. 119 
+4.6.1 Dockerfile (Django) ............................................................................................ 119 
+4.6.2 docker-compose.yml ......................................................................................... 119 
+4.7 Luồng hệ thống (End-to-End) ..................................................................................... 120 
+4.7.1 Use case: Mua hàng ........................................................................................... 120 
+4.7.2 Sequence logic ................................................................................................... 130 
+4.8 Logging và Monitoring................................................................................................ 132 
+4.9 Đánh giá hệ thống ...................................................................................................... 132 
+4.9.1 Hiệu năng ........................................................................................................... 132 
+4.9.2 Khả năng mở rộng............................................................................................... 133 
+4.9.3 Ưu điểm ............................................................................................................. 133 
+4.9.4 Nhược điểm ....................................................................................................... 133 
+Kết luận................................................................................................................................ 133 
+ 
+  
+--- PAGE 6 ---
+5 
+ 
+1. Chương 1 Từ Monolithic đến Microservices và DDD 
+1.1 Giới thiệu Monolithic Architecture 
+1.1.1 Khái niệm 
+Monolithic Architecture là mô hình kiến trúc mà trong đó mã nguồn của tất cả các 
+thành phần chức năng — bao gồm giao diện người dùng (User Interface), logic 
+nghiệp vụ (Business Logic), và truy cập dữ liệu (Data Access) — đều nằm chung 
+trong một cơ sở mã nguồn (codebase) duy nhất. 
+Một số đặc điểm cốt lõi của khái niệm này bao gồm: 
+• Tính thống nhất: Ứng dụng được xây dựng như một thực thể đồng nhất. 
+Nếu có bất kỳ thay đổi nào dù là nhỏ nhất ở một module, toàn bộ ứng dụng 
+thường phải được biên dịch và triển khai lại từ đầu. 
+• Chia sẻ tài nguyên: Các thành phần bên trong khối Monolith thường chia sẻ 
+chung bộ nhớ, tài nguyên hệ thống và một cơ sở dữ liệu duy nhất. 
+• Giao tiếp nội bộ: Sự tương tác giữa các module diễn ra thông qua các lời gọi 
+hàm trực tiếp trong cùng một tiến trình (in-process calls), giúp tối ưu hóa tốc 
+độ giao tiếp nhưng làm tăng tính phụ thuộc (tight coupling). 
+1.1.2 Cấu trúc điển hình 
+Cấu trúc của một ứng dụng Monolithic thường được tổ chức theo mô hình phân lớp 
+(Layered Architecture) bên trong một đơn vị triển khai duy nhất. Một mô hình cấu 
+trúc điển hình thường bao gồm ba lớp chính: 
+• Lớp Giao diện (Presentation Layer):  Chịu trách nhiệm xử lý các yêu cầu 
+từ phía người dùng (HTTP requests), hiển thị dữ liệu và trả về kết quả dưới 
+dạng HTML, JSON hoặc giao diện đồ họa. 
+• Lớp Logic nghiệp vụ (Business Logic Layer):  Đây là trung tâm của ứng 
+dụng, nơi chứa các quy tắc nghiệp vụ, xử lý dữ liệu và thực hiện các tính 
+năng cốt lõi của hệ thống. 
+• Lớp Truy cập dữ liệu (Data Access Layer):  Chịu trách nhiệm tương tác 
+với cơ sở dữ liệu (thường là một Database quan hệ duy nhất) để thực hiện 
+các thao tác đọc, ghi và lưu trữ thông tin. 
+1.1.3 Ví dụ thực tế 
+--- PAGE 7 ---
+6 
+ 
+ 
+Tất cả module nằm chung một codebase: Accounts, Books, Orders, Payments… 
+đều được quản lý trong cùng một ứng dụng Django. 
+Triển khai đồng bộ: khi build hoặc deploy, toàn bộ hệ thống đi cùng nhau, không 
+tách riêng từng dịch vụ. 
+Cùng một cơ sở dữ liệu: các bảng như Authors, Books, Orders, Payments… đều 
+nằm trong cùng một schema, chia sẻ kết nối. 
+Admin chung: Django Admin hiển thị tất cả model trong một giao diện, không có 
+ranh giới dịch vụ. 
+1.1.4 Nhược điểm chi tiết 
+
+--- PAGE 8 ---
+7 
+ 
+- Khó khăn trong việc mở rộng (Scalability): 
+Đây là một trong những hạn chế lớn nhất của kiến trúc đơn khối. 
++ Mở rộng không ch ọn lọc: Khi một chức năng c ụ thể (ví dụ: xử lý thanh 
+toán) bị quá tải, bạn không thể chỉ mở rộng riêng chức năng đó. Thay vào đó, b ạn 
+phải tạo ra các b ản sao c ủa toàn bộ ứng dụng trên nhi ều máy ch ủ. Điều này d ẫn 
+đến việc lãng phí tài nguyên hệ thống (RAM, CPU) cho những module không thực 
+sự cần thêm năng lực xử lý. 
++ Xung đột tài nguyên:  Do t ất cả các module ch ạy chung trong m ột tiến 
+trình, chúng phải tranh chấp tài nguyên v ới nhau, dễ dẫn đến tình trạng một thành 
+phần lỗi gây nghẽn cho toàn bộ hệ thống. 
+- Rào cản trong việc triển khai (Deployment): 
++ Thời gian đóng gói lâu:  Khi codebase đ ạt đến hàng tri ệu dòng mã, quá 
+trình biên d ịch (build) và đóng gói (package) s ẽ trở nên rất chậm chạp, kéo dài t ừ 
+vài chục phút đến hàng giờ. 
++ Rủi ro cao: Vì toàn bộ ứng dụng là một khối duy nhất, mỗi lần cập nhật dù 
+chỉ là một thay đổi nhỏ về giao diện, bạn vẫn phải khởi động lại toàn bộ hệ thống. 
+Điều này làm tăng nguy cơ x ảy ra l ỗi dây chuy ền và gây gián đo ạn d ịch v ụ 
+(downtime). 
++ Cản trở CI/CD: Việc triển khai liên tục trở nên khó khăn vì m ọi thay đổi 
+từ các nhóm phát tri ển khác nhau đ ều phải đư ợc tích h ợp và ki ểm th ử cùng lúc 
+trước khi đưa lên môi trường thực tế. 
+- Độ phức tạp tăng dần và "Nợ kỹ thuật": 
+Codebase khổng lồ: Theo thời gian, mã ngu ồn trở nên quá l ớn và r ối rắm 
+(Spaghetti code), khi ến m ột l ập trình viên duy nh ất khó có th ể hiểu h ết toàn b ộ 
+logic của hệ thống. 
+Tính phụ thuộc cao (Tight Coupling): Các thành phần bên trong thường có 
+sự ràng buộc chặt chẽ với nhau. Việc thay đ ổi code ở module này có th ể vô tình 
+làm hỏng chức năng ở module khác mà không thể dự đoán trước. 
+- Ràng buộc về công nghệ (Technology Lock-in): 
++ Khó ti ếp c ận công ngh ệ mới: Kiến trúc Monolithic bu ộc toàn b ộ ứng 
+dụng phải sử dụng chung một framework và ngôn ngữ lập trình. 
+--- PAGE 9 ---
+8 
+ 
++ Chi phí chuyển đổi lớn: Nếu muốn áp dụng một ngôn ngữ hoặc thư viện 
+mới hiệu quả hơn cho một tính năng c ụ thể, bạn gần như phải viết lại toàn bộ ứng 
+dụng. Điều này khi ến hệ thống trở nên lạc hậu so v ới tốc độ phát triển của công 
+nghệ. 
+-  Độ tin cậy và Khả năng chịu lỗi thấp (Reliability): 
++ Điểm yếu duy nhất (Single Point of Failure): Do mọi module chạy trong 
+cùng một tiến trình, m ột lỗi nhỏ như tràn b ộ nhớ (memory leak) ho ặc lỗi logic ở 
+một module không quan trọng cũng có thể làm sập toàn bộ ứng dụng. 
++ Khó cô l ập l ỗi: Khi x ảy ra s ự cố, vi ệc truy v ết và cô l ập nguyên nhân 
+trong một khối mã kh ổng lồ mất rất nhiều thời gian, gây ảnh hưởng trực tiếp đến 
+trải nghiệm người dùng. 
+-  Khó khăn cho nhân sự mới (Onboarding): 
+Đối với các l ập trình viên m ới gia nh ập dự án, việc tiếp cận một khối lượng mã 
+nguồn đồ sộ và các m ối quan h ệ chằng chịt giữa các l ớp (class) là m ột thử thách 
+lớn. Họ mất nhiều thời gian để có thể bắt đầu đóng góp code m ột cách an toàn mà 
+không làm ảnh hưởng đến các phần khác của hệ thống. 
+1.1.5 Khi nào nên dùng Monolithic 
+Việc lựa chọn kiến trúc Monolithic không nên đư ợc coi là m ột sự thụt lùi về công 
+nghệ, mà là m ột quyết định chiến lược dựa trên s ự cân bằng giữa mục tiêu kinh 
+doanh, nguồn lực nhân sự và đặc thù kỹ thuật của dự án. Dưới đây là những trường 
+hợp cụ thể mà kiến trúc đơn khối thể hiện ưu thế vượt trội: 
+Giai đoạn khởi đầu và xây d ựng sản phẩm mẫu (MVP): Trong giai đo ạn đầu 
+của một dự án, mục tiêu hàng đầu là đưa sản phẩm ra thị trường nhanh nhất có thể 
+để kiểm chứng ý tưởng. Kiến trúc Monolithic cho phép đội ngũ phát triển tập trung 
+hoàn toàn vào các tính năng c ốt lõi mà không b ị phân tâm bởi các vấn đề phức tạp 
+của hệ thống phân tán như giao ti ếp mạng giữa các dịch vụ hay quản lý giao d ịch 
+liên dịch vụ. Việc quản lý mã ngu ồn trong m ột khối duy nh ất cũng giúp vi ệc thay 
+đổi logic nghiệp vụ và tái cấu trúc diễn ra thuận lợi hơn khi yêu cầu từ khách hàng 
+chưa thực sự ổn định. 
+Đội ngũ phát tri ển có quy mô nh ỏ: Đối với các nhóm phát tri ển chỉ từ 2 đến 5 
+người, việc triển khai các kiến trúc phức tạp như Microservices sẽ tạo ra gánh nặng 
+vận hành quá lớn. Monolithic giúp giảm thiểu chi phí giao ti ếp và quản trị hạ tầng. 
+Khi đó, m ỗi thành viên đ ều có th ể nắm bắt toàn b ộ bức tranh c ủa hệ thống, giúp 
+quy trình từ phát triển đến triển khai trở nên tinh gọn và hiệu quả hơn. 
+--- PAGE 10 ---
+9 
+ 
+ 
+Ứng d ụng có đ ộ phức t ạp th ấp ho ặc phạm vi gi ới h ạn: Không ph ải m ọi ứng 
+dụng đều cần khả năng mở rộng đến mức khổng lồ. Nếu hệ thống chỉ phục vụ các 
+nhu cầu quản lý n ội bộ, trang tin t ức hoặc các công c ụ có luồng dữ liệu đơn gi ản, 
+việc áp d ụng Monolithic là l ựa chọn kinh t ế nhất. Điều này giúp tránh đư ợc tình 
+trạng "over-engineering" – sử dụng công ngh ệ quá phức tạp cho m ột bài toán đơn 
+giản, gây lãng phí tài nguyên và kéo dài thời gian phát triển không cần thiết. 
+Yêu c ầu t ối ưu v ề hiệu su ất giao ti ếp n ội b ộ: Trong ki ến trúc đơn kh ối, các 
+module tương tác v ới nhau thông qua l ời g ọi hàm tr ực ti ếp trong b ộ nhớ (in-
+memory calls). Đi ều này giúp lo ại bỏ hoàn toàn đ ộ trễ mạng và các chi phí liên 
+quan đến việc mã hóa d ữ liệu thường thấy trong ki ến trúc phân tán. V ới các ứng 
+dụng yêu c ầu phản hồi cực nhanh gi ữa các thành ph ần bên trong mà không mu ốn 
+đối mặt với rủi ro gián đoạn kết nối mạng giữa các dịch vụ, Monolithic tỏ ra chiếm 
+ưu thế tuyệt đối về mặt tốc độ. 
+Hạn chế về ngân sách và năng l ực vận hành (DevOps):  Kiến trúc phân tán đòi 
+hỏi một hệ sinh thái vận hành phức tạp bao gồm các công cụ giám sát, quản lý log 
+tập trung và n ền t ảng điều phối container. Monolithic giúp t ối ưu hóa chi phí h ạ 
+tầng vì ứng dụng thường chỉ cần một máy ch ủ và một cơ s ở dữ liệu duy nh ất để 
+hoạt động. Việc tìm lỗi (debugging) và giám sát hiệu năng trên một khối mã nguồn 
+tập trung cũng đơn giản và ít tốn kém hơn so với việc truy vết sự cố qua hàng chục 
+dịch vụ khác nhau. 
+Nhìn chung, b ắt đ ầu v ới m ột ki ến trúc Monolithic đư ợc thi ết k ế tốt (Modular 
+Monolith) là m ột bư ớc đi khôn ngoan. Nó t ạo ra n ền t ảng v ững ch ắc đ ể doanh 
+nghiệp phát tri ển s ản phẩm ổn định trước khi tính đ ến việc chuyển đổi sang các 
+kiến trúc phức tạp hơn khi quy mô người dùng và độ phức tạp của hệ thống thực sự 
+vượt quá khả năng đáp ứng của mô hình đơn khối. 
+1.2 Microservices Architecture 
+1.2.1 Khái niệm 
+Kiến trúc Microservices (kiến trúc vi dịch vụ) là một phương pháp tiếp cận hiện đại 
+trong thiết kế phần mềm, trong đó m ột ứng dụng được xây dựng như một tập hợp 
+các dịch vụ nhỏ, độc lập và có kh ả năng giao tiếp với nhau. Trái ngư ợc hoàn toàn 
+với ki ến trúc Monolithic v ốn t ập h ợp t ất c ả chức năng vào m ột kh ối duy nh ất, 
+Microservices chia nhỏ hệ thống dựa trên các ph ạm vi nghiệp vụ cụ thể. Mỗi dịch 
+vụ trong mô hình này đóng vai trò là m ột thực thể riêng biệt, thực hiện một chức 
+--- PAGE 11 ---
+10 
+ 
+năng duy nhất và có thể được phát triển, triển khai cũng như mở rộng một cách độc 
+lập mà không gây ảnh hưởng đến các thành phần khác của hệ thống 
+Tính độc lập và tự chủ (Independence and Autonomy):  Mỗi vi dịch vụ là một 
+đơn vị triển khai độc lập. Điều này có nghĩa là các đội ngũ phát triển có thể cập 
+nhật, sửa lỗi hoặc thêm tính năng mới cho một dịch vụ cụ thể mà không cần phải 
+biên dịch lại hoặc khởi động lại toàn bộ ứng dụng. Tính tự chủ này còn thể hiện ở 
+việc mỗi dịch vụ có thể sử dụng một ngôn ngữ lập trình, khung phần mềm 
+(framework) và hệ quản trị cơ sở dữ liệu khác nhau, tùy thuộc vào công nghệ nào 
+tối ưu nhất cho bài toán mà dịch vụ đó giải quyết (Polyglot Programming). 
+Giao tiếp qua các giao thức nhẹ (Lightweight Communication):  Vì các dịch vụ 
+nằm ở các tiến trình khác nhau, đôi khi trên các máy chủ khác nhau, chúng tương 
+tác với nhau thông qua mạng bằng các giao thức nhẹ và chuẩn hóa. Phổ biến nhất là 
+giao thức HTTP/REST với dữ liệu dạng JSON, hoặc các giao thức hiệu năng cao 
+như gRPC. Ngoài ra, giao tiếp bất đồng bộ thông qua các hệ thống hàng đợi tin 
+nhắn (Message Broker) như RabbitMQ hay Kafka cũng được sử dụng rộng rãi để 
+tăng tính linh hoạt và khả năng chịu lỗi cho hệ thống. 
+Quản lý dữ liệu phi tập trung (Decentralized Data Management):  Đây là một 
+trong những điểm khác biệt quan trọng nhất so với kiến trúc truyền thống. Trong 
+Microservices, mỗi dịch vụ thường sở hữu một cơ sở dữ liệu riêng (Database -per-
+service). Việc này giúp ngăn chặn tình trạng thắt nút cổ chai tại lớp dữ liệu và đảm 
+bảo tính bao đóng, giúp các dịch vụ không thể can thiệp trực tiếp vào dữ liệu của 
+nhau trừ khi thông qua các API được công khai. 
+Phân tách theo chức năng nghiệp vụ (Business Capability -centric): Thay vì 
+phân chia theo các lớp kỹ thuật như giao diện, logic và dữ liệu, Microservices phân 
+chia theo các dòng nghiệp vụ. Ví dụ, trong một hệ thống thương mại điện tử, sẽ có 
+các dịch vụ riêng biệt cho Quản lý đơn hàng, Quản lý kho, Thanh toán và Chăm 
+sóc khách hàng. Cách tổ chức này giúp hệ thống phản ánh đúng cấu trúc hoạt động 
+của doanh nghiệp, giúp việc bàn giao và quản lý sản phẩm giữa các nhóm trở nên 
+rõ ràng hơn. 
+Khả năng chịu lỗi và tự phục hồi (Fault Tolerance):  Trong mô hình này, nếu 
+một dịch vụ cụ thể gặp sự cố (ví dụ dịch vụ gợi ý sản phẩm bị treo), toàn bộ ứng 
+dụng vẫn có thể hoạt động bình thường, chỉ trừ tính năng liên quan đến dịch vụ đó. 
+Điều này giúp nâng cao độ tin cậy tổng thể của hệ thống, cho phép các kỹ sư cô lập 
+và xử lý lỗi một cách nhanh chóng mà không gây ra tình trạng sập hệ thống dây 
+chuyền. 
+1.2.2 Đặc điểm 
+--- PAGE 12 ---
+11 
+ 
+Kiến trúc Microservices s ở hữu những đặc tính riêng bi ệt, giúp gi ải quyết triệt để 
+các vấn đề về quy mô và đ ộ phức tạp mà các h ệ thống truyền thống thường gặp 
+phải. Dưới đây là các đặc điểm chi tiết của mô hình này: 
+Tính phân rã và đ ộc lập (Decoupling and Independence): Đặc điểm quan trọng 
+nhất của Microservices là khả năng tồn tại độc lập của từng dịch vụ. Mỗi vi dịch vụ 
+tập trung gi ải quyết một bài toán nghi ệp vụ cụ thể và không ph ụ thuộc vào tr ạng 
+thái bên trong c ủa các dịch vụ khác. Sự độc lập này cho phép các nhóm phát tri ển 
+có thể tự do lựa chọn công ngh ệ, ngôn ng ữ lập trình và quy trình tri ển khai riêng 
+biệt cho từng thành phần mà không làm ảnh hưởng đến tiến độ chung của toàn hệ 
+thống. 
+Quản lý dữ liệu riêng biệt (Decentralized Data): Khác với mô hình t ập trung sử 
+dụng m ột cơ s ở dữ liệu khổng l ồ cho toàn b ộ ứng d ụng, Microservices áp d ụng 
+nguyên t ắc m ỗi d ịch v ụ sở hữu và qu ản lý d ữ liệu riêng (Database -per-service). 
+Điều này giúp lo ại bỏ sự ràng buộc chặt chẽ ở tầng dữ liệu, tránh đư ợc các xung 
+đột khi truy c ập và cho phép m ỗi dịch vụ sử dụng loại hình lưu tr ữ phù hợp nhất 
+(như SQL cho các giao dịch tài chính hoặc NoSQL cho việc lưu trữ log, cache). 
+Khả năng mở rộng linh ho ạt (Scalability): Với Microservices, vi ệc mở rộng hệ 
+thống không còn là quá trình nhân b ản toàn bộ ứng dụng một cách lãng phí. Thay 
+vào đó, doanh nghi ệp có th ể thực hiện mở rộng có ch ọn lọc. Ví d ụ, nếu dịch vụ 
+"Tìm kiếm" đang quá t ải do lư ợng người dùng tăng cao, ch ỉ duy nhất dịch vụ này 
+được cấp thêm tài nguyên (CPU, RAM) ho ặc tạo thêm các b ản sao, trong khi các 
+dịch vụ khác như "Thanh toán" hay "Cá nhân hóa" vẫn duy trì ở mức tài nguyên cũ, 
+giúp tối ưu hóa chi phí hạ tầng. 
+Khả năng chịu lỗi bền bỉ (Resilience): Trong hệ thống Microservices, các dịch vụ 
+được ngăn cách bởi các ranh giới mạng. Khi một dịch vụ gặp sự cố kỹ thuật hoặc bị 
+sập, lỗi này sẽ được cô lập trong phạm vi của dịch vụ đó thay vì lan rộng ra toàn bộ 
+hệ thống. Các kỹ thuật như "Circuit Breaker" (Bộ ngắt mạch) thường được áp dụng 
+để giúp hệ thống vẫn duy trì hoạt động ở các tính năng còn lại, đảm bảo trải nghiệm 
+người dùng không bị gián đoạn hoàn toàn. 
+Tự động hóa quy trình tri ển khai (Automation through CI/CD):  Do đ ặc thù 
+bao gồm rất nhiều dịch vụ nhỏ lẻ, việc triển khai thủ công là điều không khả thi. Vì 
+vậy, đặc điểm đi kèm không th ể thiếu của Microservices là s ự phụ thuộc chặt chẽ 
+vào các quy trình t ự động hóa. M ọi công đo ạn từ kiểm thử, đóng gói (thư ờng sử 
+dụng Container như Docker) đ ến tri ển khai lên các môi trư ờng (thường s ử dụng 
+Kubernetes) đều đư ợc th ực hi ện thông qua các đư ờng ống CI/CD, giúp rút ng ắn 
+thời gian phản hồi và tăng tần suất phát hành tính năng mới. 

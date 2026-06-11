@@ -1,102 +1,30 @@
-from decimal import Decimal
-import importlib
-import json
-
 from django.contrib import messages
-from django.db import transaction
-from django.db.models import F
+from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-from .models import Category, Order, OrderItem, Product
-
-
-TAX_RATE = Decimal("0.08")
-
-
-def get_cart(request):
-    return request.session.get("cart", {})
-
-
-def save_cart(request, cart):
-    request.session["cart"] = cart
-    request.session.modified = True
-
-
-def cart_count(cart):
-    return sum(int(quantity) for quantity in cart.values())
-
-
-def cart_totals(cart):
-    product_ids = [int(product_id) for product_id in cart.keys() if str(product_id).isdigit()]
-    products = Product.objects.filter(id__in=product_ids, is_active=True).select_related("category")
-    products_by_id = {product.id: product for product in products}
-
-    items = []
-    subtotal = Decimal("0.00")
-
-    for product_id, quantity in cart.items():
-        if not str(product_id).isdigit():
-            continue
-
-        product = products_by_id.get(int(product_id))
-        if not product:
-            continue
-
-        quantity = max(int(quantity), 0)
-        if quantity <= 0:
-            continue
-
-        line_total = product.price * quantity
-        subtotal += line_total
-        items.append(
-            {
-                "product": product,
-                "id": product.id,
-                "name": product.name,
-                "category": product.category.name,
-                "price": product.price,
-                "original_price": product.original_price,
-                "icon": product.icon,
-                "color": product.color,
-                "quantity": quantity,
-                "line_total": line_total,
-                "stock": product.stock,
-            }
-        )
-
-    tax = (subtotal * TAX_RATE).quantize(Decimal("0.01"))
-    total = subtotal + tax
-    return items, subtotal, tax, total
-
-
-def json_body(request):
-    try:
-        return json.loads(request.body or "{}"), None
-    except json.JSONDecodeError:
-        return None, JsonResponse({"error": "Invalid JSON format"}, status=400)
-
-
-rag_chain = None
-rag_module = None
-
-
-def get_chain():
-    global rag_chain, rag_module
-    if rag_chain is None:
-        try:
-            rag_module = importlib.import_module("rag_chat")
-            rag_chain = rag_module.setup_rag()
-        except ImportError:
-            return None
-    return rag_chain
+from .cart_ops import cart_count, cart_totals, get_active_product, get_cart, save_cart
+from .checkout_ops import checkout_customer_from_post, create_checkout_order, has_required_customer_fields
+from .customer_session import auth_context, clear_current_customer, current_customer, set_current_customer
+from .http_utils import json_body
+from .models import Category, Order, Product
+from .rag import get_chain
+from .services import ai as ai_service
+from .services import catalog as catalog_service
+from .services import orders as order_service
+from .services import users as user_service
+from .services.http import ServiceError
 
 
 @ensure_csrf_cookie
 def home(request):
-    categories = Category.objects.filter(is_active=True)
-    products = Product.objects.filter(is_active=True).select_related("category")
+    if settings.USE_MICROSERVICES:
+        categories = catalog_service.list_categories()
+        products = catalog_service.list_products()
+    else:
+        categories = Category.objects.filter(is_active=True)
+        products = Product.objects.filter(is_active=True).select_related("category")
     cart = get_cart(request)
     return render(
         request,
@@ -105,24 +33,38 @@ def home(request):
             "categories": categories,
             "products": products,
             "cart_count": cart_count(cart),
+            **auth_context(request),
         },
     )
 
 
 @ensure_csrf_cookie
 def product_detail(request, product_id):
-    product = get_object_or_404(
-        Product.objects.select_related("category"),
-        id=product_id,
-        is_active=True,
-    )
-    related = (
-        Product.objects.filter(category=product.category, is_active=True)
-        .exclude(id=product.id)
-        .select_related("category")[:4]
-    )
-    if not related:
-        related = Product.objects.filter(is_active=True).exclude(id=product.id).select_related("category")[:4]
+    if settings.USE_MICROSERVICES:
+        try:
+            product = catalog_service.get_product(product_id)
+            related = [
+                candidate
+                for candidate in catalog_service.list_products()
+                if candidate.id != product.id and candidate.category.id == product.category.id
+            ][:4]
+            if not related:
+                related = [candidate for candidate in catalog_service.list_products() if candidate.id != product.id][:4]
+        except ServiceError:
+            return redirect("home")
+    else:
+        product = get_object_or_404(
+            Product.objects.select_related("category"),
+            id=product_id,
+            is_active=True,
+        )
+        related = (
+            Product.objects.filter(category=product.category, is_active=True)
+            .exclude(id=product.id)
+            .select_related("category")[:4]
+        )
+        if not related:
+            related = Product.objects.filter(is_active=True).exclude(id=product.id).select_related("category")[:4]
 
     cart = get_cart(request)
     return render(
@@ -133,6 +75,7 @@ def product_detail(request, product_id):
             "related": related,
             "cart_count": cart_count(cart),
             "savings": product.savings,
+            **auth_context(request),
         },
     )
 
@@ -150,6 +93,7 @@ def cart(request):
             "tax": tax,
             "total": total,
             "cart_count": cart_count(cart_data),
+            **auth_context(request),
         },
     )
 
@@ -162,60 +106,17 @@ def checkout(request):
         return redirect("cart")
 
     if request.method == "POST":
-        first_name = request.POST.get("first_name", "").strip()
-        last_name = request.POST.get("last_name", "").strip()
-        full_name = f"{first_name} {last_name}".strip()
-        email = request.POST.get("email", "").strip()
-        phone = request.POST.get("phone", "").strip()
-        address = request.POST.get("address", "").strip()
-        city = request.POST.get("city", "").strip()
-        postal_code = request.POST.get("postal_code", "").strip()
+        customer = checkout_customer_from_post(request.POST)
 
-        if not all([full_name, email, address, city, postal_code]):
+        if not has_required_customer_fields(customer):
             messages.error(request, "Please complete all required checkout fields.")
         else:
             try:
-                with transaction.atomic():
-                    locked_products = {
-                        product.id: product
-                        for product in Product.objects.select_for_update().filter(
-                            id__in=[item["id"] for item in items],
-                            is_active=True,
-                        )
-                    }
-
-                    for item in items:
-                        product = locked_products.get(item["id"])
-                        if not product or product.stock < item["quantity"]:
-                            raise ValueError(f"{item['name']} does not have enough stock.")
-
-                    order = Order.objects.create(
-                        full_name=full_name,
-                        email=email,
-                        phone=phone,
-                        address=address,
-                        city=city,
-                        postal_code=postal_code,
-                        subtotal=subtotal,
-                        tax=tax,
-                        total=total,
-                    )
-
-                    for item in items:
-                        product = locked_products[item["id"]]
-                        line_total = product.price * item["quantity"]
-                        OrderItem.objects.create(
-                            order=order,
-                            product=product,
-                            product_name=product.name,
-                            unit_price=product.price,
-                            quantity=item["quantity"],
-                            line_total=line_total,
-                        )
-                        Product.objects.filter(id=product.id).update(stock=F("stock") - item["quantity"])
-
+                order = create_checkout_order(customer, items, subtotal, tax, total)
                 save_cart(request, {})
                 return redirect("checkout_success", order_id=order.id)
+            except ServiceError as exc:
+                messages.error(request, str(exc))
             except ValueError as exc:
                 messages.error(request, str(exc))
 
@@ -228,13 +129,87 @@ def checkout(request):
             "tax": tax,
             "total": total,
             "cart_count": cart_count(cart_data),
+            **auth_context(request),
         },
     )
 
 
 def checkout_success(request, order_id):
-    order = get_object_or_404(Order.objects.prefetch_related("items"), id=order_id)
-    return render(request, "ecommerce_ai/checkout_success.html", {"order": order, "cart_count": 0})
+    if settings.USE_MICROSERVICES:
+        try:
+            order = order_service.get_order(order_id)
+        except ServiceError:
+            return redirect("home")
+    else:
+        order = get_object_or_404(Order.objects.prefetch_related("items"), id=order_id)
+    return render(request, "ecommerce_ai/checkout_success.html", {"order": order, "cart_count": 0, **auth_context(request)})
+
+
+@ensure_csrf_cookie
+def register(request):
+    if request.method == "POST":
+        payload = {
+            "email": request.POST.get("email", "").strip(),
+            "password": request.POST.get("password", ""),
+            "full_name": request.POST.get("full_name", "").strip(),
+            "phone": request.POST.get("phone", "").strip(),
+            "address": request.POST.get("address", "").strip(),
+            "city": request.POST.get("city", "").strip(),
+            "postal_code": request.POST.get("postal_code", "").strip(),
+        }
+        try:
+            customer = user_service.register_user(payload)
+            set_current_customer(request, customer)
+            messages.success(request, "Account created successfully.")
+            return redirect("account")
+        except ServiceError as exc:
+            messages.error(request, str(exc))
+
+    return render(request, "ecommerce_ai/register.html", {"cart_count": cart_count(get_cart(request)), **auth_context(request)})
+
+
+@ensure_csrf_cookie
+def login(request):
+    if request.method == "POST":
+        email = request.POST.get("email", "").strip()
+        password = request.POST.get("password", "")
+        try:
+            result = user_service.login_user(email, password)
+            set_current_customer(request, result["user"])
+            messages.success(request, "Signed in successfully.")
+            return redirect("account")
+        except ServiceError as exc:
+            messages.error(request, str(exc))
+
+    return render(request, "ecommerce_ai/login.html", {"cart_count": cart_count(get_cart(request)), **auth_context(request)})
+
+
+def logout(request):
+    clear_current_customer(request)
+    return redirect("home")
+
+
+@ensure_csrf_cookie
+def account(request):
+    customer = current_customer(request)
+    if not customer:
+        return redirect("login")
+
+    try:
+        profile = user_service.get_user(customer["id"])
+    except ServiceError as exc:
+        messages.error(request, str(exc))
+        profile = None
+
+    return render(
+        request,
+        "ecommerce_ai/account.html",
+        {
+            "profile": profile,
+            "cart_count": cart_count(get_cart(request)),
+            **auth_context(request),
+        },
+    )
 
 
 def cart_add(request):
@@ -251,7 +226,7 @@ def cart_add(request):
     except (TypeError, ValueError):
         return JsonResponse({"error": "Invalid product or quantity"}, status=400)
 
-    product = Product.objects.filter(id=product_id, is_active=True).first()
+    product = get_active_product(product_id)
     if not product:
         return JsonResponse({"error": "Product not found"}, status=404)
 
@@ -305,7 +280,7 @@ def cart_update(request):
         return JsonResponse({"error": "Invalid product or quantity"}, status=400)
 
     cart_data = get_cart(request)
-    product = Product.objects.filter(id=product_id, is_active=True).first()
+    product = get_active_product(product_id)
 
     if quantity <= 0:
         cart_data.pop(str(product_id), None)
@@ -339,15 +314,38 @@ def chat_api(request):
     if not message:
         return JsonResponse({"error": "Message cannot be empty"}, status=400)
 
-    chain = get_chain()
+    if settings.USE_MICROSERVICES:
+        try:
+            return JsonResponse(ai_service.ask(message))
+        except ServiceError as exc:
+            fallback_response = ask_local_rag(message)
+            if fallback_response:
+                return JsonResponse({"response": fallback_response, "source": "local-rag-fallback"})
+            return JsonResponse(
+                {
+                    "error": (
+                        f"{exc}. Start AI service or set AI_SERVICE_URL to the running AI service URL."
+                    )
+                },
+                status=503,
+            )
+
+    response_text = ask_local_rag(message)
+    if response_text:
+        return JsonResponse({"response": response_text})
+
+    return JsonResponse(
+        {"error": "RAG system is not initialized. Ensure GROQ_API_KEY is configured and Neo4j is running."},
+        status=500,
+    )
+
+
+def ask_local_rag(message):
+    chain, rag_module = get_chain()
     if not chain:
-        return JsonResponse(
-            {"error": "RAG system is not initialized. Ensure GROQ_API_KEY is configured and Neo4j is running."},
-            status=500,
-        )
+        return None
 
     try:
-        response_text = rag_module.ask_question(chain, message)
-        return JsonResponse({"response": response_text})
-    except Exception as exc:
-        return JsonResponse({"error": str(exc)}, status=500)
+        return rag_module.ask_question(chain, message)
+    except Exception:
+        return None

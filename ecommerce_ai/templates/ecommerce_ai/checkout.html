@@ -47,6 +47,8 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        .nav-links { display: flex; gap: 1.4rem; align-items: center; }
+        .nav-links a { color: var(--text-light); text-decoration: none; font-weight: 500; }
         .cart-link { position: relative; color: var(--text-light); text-decoration: none; font-weight: 500; }
         .cart-badge {
             position: absolute;
@@ -127,10 +129,18 @@
 <body>
 <nav>
     <a href="/" class="brand"><i class="fa-solid fa-cube"></i> Nexus Store</a>
-    <a href="/cart/" class="cart-link">
-        <i class="fa-solid fa-cart-shopping"></i> Cart
-        <span class="cart-badge" {% if not cart_count %}style="display:none"{% endif %}>{{ cart_count }}</span>
-    </a>
+    <div class="nav-links">
+        <a href="/">Shop</a>
+        <a href="/cart/" class="cart-link">
+            <i class="fa-solid fa-cart-shopping"></i> Cart
+            <span class="cart-badge" {% if not cart_count %}style="display:none"{% endif %}>{{ cart_count }}</span>
+        </a>
+        {% if customer %}
+            <a href="/account/"><i class="fa-solid fa-user"></i> {{ customer.full_name }}</a>
+        {% else %}
+            <a href="/login/">Login</a>
+        {% endif %}
+    </div>
 </nav>
 
 <main>

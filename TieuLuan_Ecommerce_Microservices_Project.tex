@@ -1,0 +1,1253 @@
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage[vietnamese]{babel}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{float}
+
+\geometry{left=3cm,right=2cm,top=2.5cm,bottom=2.5cm}
+\setstretch{1.3}
+\setlist[itemize]{leftmargin=1.5cm}
+\setlist[enumerate]{leftmargin=1.5cm}
+
+\titleformat{\chapter}{\huge\bfseries}{Chương \thechapter}{1em}{}
+
+\lstdefinestyle{code}{
+  basicstyle=\ttfamily\small,
+  columns=fullflexible,
+  breaklines=true,
+  frame=single,
+  keepspaces=true,
+  showstringspaces=false
+}
+
+\newcommand{\imageplaceholder}[2]{
+\begin{figure}[H]
+  \centering
+  \fbox{
+    \begin{minipage}{0.88\textwidth}
+      \centering
+      \vspace{0.6cm}
+      \textbf{TODO: Chèn ảnh}\\[0.2cm]
+      #2
+      \vspace{0.6cm}
+    \end{minipage}
+  }
+  \caption{#1}
+\end{figure}
+}
+
+\begin{document}
+
+% =======================
+% BIA
+% =======================
+\begin{titlepage}
+    \begin{center}
+        \textbf{HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG}\\[0.3cm]
+        \textbf{KHOA CÔNG NGHỆ THÔNG TIN 1}\\[0.5cm]
+        \vspace{2.5cm}
+
+        {\Large\textbf{TIỂU LUẬN SoAD}}\\[0.3cm]
+        {\Large\textbf{KIẾN TRÚC VÀ THIẾT KẾ PHẦN MỀM}}\\[1.1cm]
+
+        {\LARGE\textbf{THIẾT KẾ VÀ XÂY DỰNG HỆ THỐNG}}\\[0.3cm]
+        {\LARGE\textbf{E-COMMERCE ĐỒ DÙNG ĐIỆN TỬ}}\\[0.3cm]
+        {\LARGE\textbf{THEO KIẾN TRÚC MICROSERVICES}}\\[2cm]
+    \end{center}
+
+    \vspace{1cm}
+
+    \begin{flushleft}
+        \hspace*{3.5cm}\textbf{Giảng viên hướng dẫn:} Trần Đình Quế\\[0.4cm]
+        \hspace*{3.5cm}\textbf{Lớp:} E22CNPM02\\[0.4cm]
+        \hspace*{3.5cm}\textbf{Sinh viên:} Trần Xuân Thành\\[0.4cm]
+        \hspace*{3.5cm}\textbf{Mã sinh viên:} B22DCVT518\\[0.4cm]
+        \hspace*{3.5cm}\textbf{Nhóm:} 02
+    \end{flushleft}
+
+    \vfill
+    \begin{center}
+        Hà Nội, 2026
+    \end{center}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+% =======================
+% CHAPTER 1
+% =======================
+\chapter{Từ Monolithic đến Microservices và DDD}
+
+\section{Giới thiệu Monolithic Architecture}
+
+\subsection{Khái niệm}
+
+Monolithic Architecture là mô hình kiến trúc phần mềm trong đó toàn bộ chức năng của hệ thống được xây dựng, đóng gói và triển khai như một đơn vị duy nhất. Trong một ứng dụng Monolithic, các thành phần như giao diện người dùng, xử lý nghiệp vụ, truy cập dữ liệu, quản lý người dùng, quản lý sản phẩm, giỏ hàng, đơn hàng, thanh toán và vận chuyển đều nằm trong cùng một codebase.
+
+Ở giai đoạn đầu của project e-commerce này, hệ thống cũng được triển khai theo hướng Monolithic bằng một project Django duy nhất tên \texttt{aiecommerce2}. App \texttt{ecommerce\_ai} ban đầu chịu trách nhiệm hiển thị sản phẩm, xử lý giỏ hàng, checkout, chatbot và quản lý dữ liệu bằng SQLite.
+
+Monolithic có ưu điểm là dễ triển khai nhanh, dễ chạy local và phù hợp với giai đoạn MVP. Tuy nhiên, khi hệ thống mở rộng, việc gom mọi chức năng vào một codebase làm tăng coupling giữa các module, khó scale riêng từng phần và khó triển khai độc lập.
+
+\subsection{Cấu trúc điển hình}
+
+Một hệ thống Monolithic thường có cấu trúc phân lớp:
+
+\begin{itemize}
+  \item \textbf{Presentation Layer}: xử lý HTTP request, render HTML hoặc trả JSON.
+  \item \textbf{Business Logic Layer}: xử lý nghiệp vụ như tính tổng tiền, kiểm tra tồn kho, tạo đơn hàng.
+  \item \textbf{Data Access Layer}: truy cập database thông qua ORM.
+  \item \textbf{Database}: một cơ sở dữ liệu dùng chung cho toàn bộ hệ thống.
+\end{itemize}
+
+\begin{verbatim}
+Client / Browser
+      |
+      v
+Monolithic Django Application
+      |
+      |-- Views / Templates
+      |-- Business Logic
+      |-- ORM Models
+      |
+      v
+Single SQLite Database
+\end{verbatim}
+
+\subsection{Ví dụ thực tế trong project}
+
+Trong phiên bản ban đầu, project có các model \texttt{Category}, \texttt{Product}, \texttt{Order}, \texttt{OrderItem} trong app \texttt{ecommerce\_ai}. Các view như \texttt{home}, \texttt{product\_detail}, \texttt{cart}, \texttt{checkout}, \texttt{chat\_api} đều nằm trong cùng một file \texttt{views.py}.
+
+Ví dụ luồng checkout trong Monolithic:
+
+\begin{enumerate}
+  \item Người dùng thêm sản phẩm vào giỏ hàng.
+  \item Giỏ hàng được lưu trong Django session.
+  \item View \texttt{checkout} đọc dữ liệu sản phẩm từ database local.
+  \item Hệ thống tạo \texttt{Order}, \texttt{OrderItem}.
+  \item Hệ thống trừ tồn kho trong bảng \texttt{Product}.
+\end{enumerate}
+
+Luồng này đơn giản và dễ kiểm soát bằng transaction trong một database, nhưng không tách được Order, Payment, Inventory thành các năng lực độc lập.
+
+\subsection{Nhược điểm chi tiết}
+
+\subsubsection{Khó mở rộng hệ thống}
+
+Trong Monolithic, nếu chỉ chức năng xem sản phẩm bị tải cao, toàn bộ ứng dụng vẫn phải được scale. Điều này gây lãng phí tài nguyên vì các chức năng ít tải hơn như tài khoản hoặc thanh toán cũng bị nhân bản theo.
+
+\subsubsection{Coupling cao giữa các module}
+
+Các module trong cùng một codebase thường gọi trực tiếp model hoặc hàm của nhau. Ví dụ, view checkout vừa đọc sản phẩm, vừa tạo order, vừa trừ tồn kho. Khi thay đổi cấu trúc sản phẩm hoặc tồn kho, checkout có thể bị ảnh hưởng.
+
+\subsubsection{Triển khai rủi ro}
+
+Một thay đổi nhỏ trong module chatbot hoặc admin cũng có thể yêu cầu deploy lại toàn bộ ứng dụng. Nếu deploy lỗi, toàn bộ website có thể bị ảnh hưởng.
+
+\subsubsection{Khó áp dụng công nghệ mới}
+
+Nếu muốn dùng Neo4j cho AI, hoặc tách Payment thành một service riêng, Monolithic làm việc này kém tự nhiên hơn vì mọi thứ bị gắn vào cùng một project.
+
+\subsubsection{Khó bảo trì khi hệ thống lớn}
+
+Khi \texttt{views.py} chứa quá nhiều trách nhiệm, code trở nên khó đọc và khó test. Vì vậy project đã được refactor, tách logic cart, checkout, customer session, RAG và HTTP utility ra các module riêng.
+
+\subsection{Khi nào nên dùng Monolithic}
+
+Monolithic vẫn phù hợp khi:
+
+\begin{itemize}
+  \item Dự án ở giai đoạn MVP.
+  \item Nhóm phát triển nhỏ.
+  \item Nghiệp vụ chưa ổn định.
+  \item Chưa có yêu cầu scale từng phần.
+\end{itemize}
+
+Trong project này, Monolithic là điểm khởi đầu hợp lý. Sau khi các chức năng chính ổn định, hệ thống được tách dần sang Microservices.
+
+\section{Microservices Architecture}
+
+\subsection{Khái niệm}
+
+Microservices Architecture là kiến trúc trong đó hệ thống được phân rã thành nhiều service nhỏ, độc lập. Mỗi service phụ trách một năng lực nghiệp vụ cụ thể, có thể được phát triển, kiểm thử, triển khai và mở rộng riêng.
+
+Trong project hiện tại, hệ thống đã được tách thành các service:
+
+\begin{itemize}
+  \item \texttt{catalog-service}: quản lý danh mục và sản phẩm hiển thị.
+  \item \texttt{order-service}: quản lý đơn hàng.
+  \item \texttt{user-service}: quản lý khách hàng.
+  \item \texttt{ai-service}: chatbot/RAG.
+  \item \texttt{payment-service}: quản lý thanh toán.
+  \item \texttt{product-service}: quản lý kho hàng và tồn kho.
+  \item \texttt{shipping-service}: quản lý vận chuyển.
+\end{itemize}
+
+\subsection{Đặc điểm}
+
+\subsubsection{Triển khai độc lập}
+
+Mỗi service là một Django project riêng nằm trong thư mục \texttt{services/}. Các service có file \texttt{manage.py}, settings, models, views và database riêng.
+
+\subsubsection{Sở hữu dữ liệu riêng}
+
+Mỗi service sử dụng SQLite riêng trong môi trường local. Ví dụ, Order Service sở hữu bảng \texttt{Order}, \texttt{OrderItem}; Payment Service sở hữu bảng \texttt{Payment}; Shipping Service sở hữu \texttt{Carrier}, \texttt{Shipment}, \texttt{RouteEvent}.
+
+\subsubsection{Giao tiếp qua mạng}
+
+Storefront/BFF gọi các service bằng HTTP/JSON thông qua các client trong thư mục \texttt{ecommerce\_ai/services/}. Ví dụ \texttt{orders.py} gọi Order Service, \texttt{payments.py} gọi Payment Service.
+
+\subsubsection{Mở rộng linh hoạt}
+
+Nếu chatbot có tải cao, chỉ AI Service cần scale. Nếu nghiệp vụ giao hàng phức tạp hơn, Shipping Service có thể phát triển độc lập mà không ảnh hưởng Catalog Service.
+
+\subsection{So sánh Monolithic và Microservices}
+
+\begin{longtable}{|p{4cm}|p{5cm}|p{5cm}|}
+\hline
+\textbf{Tiêu chí} & \textbf{Monolithic} & \textbf{Microservices} \\
+\hline
+Triển khai & Một ứng dụng duy nhất & Nhiều service độc lập \\
+\hline
+Database & Dùng chung database & Mỗi service sở hữu database riêng \\
+\hline
+Giao tiếp & Gọi hàm trong cùng process & HTTP/API giữa các service \\
+\hline
+Mở rộng & Scale toàn bộ ứng dụng & Scale từng service \\
+\hline
+Độ phức tạp & Thấp hơn & Cao hơn \\
+\hline
+Phù hợp & MVP, nhóm nhỏ & Hệ thống nhiều domain \\
+\hline
+\end{longtable}
+
+\subsection{Ưu điểm}
+
+\begin{itemize}
+  \item Tách biệt trách nhiệm theo nghiệp vụ.
+  \item Service có thể phát triển và triển khai độc lập.
+  \item Dễ mở rộng từng phần.
+  \item Phù hợp với hệ thống e-commerce có nhiều domain.
+\end{itemize}
+
+\subsection{Nhược điểm}
+
+\begin{itemize}
+  \item Tăng độ phức tạp vận hành.
+  \item Cần quản lý nhiều port, nhiều database, nhiều service.
+  \item Giao tiếp HTTP có thể gặp timeout hoặc lỗi mạng.
+  \item Khó đảm bảo transaction phân tán giữa Order, Payment, Inventory và Shipping.
+\end{itemize}
+
+\subsection{Nguyên tắc thiết kế}
+
+Các nguyên tắc được áp dụng trong project:
+
+\begin{itemize}
+  \item \textbf{Single Responsibility}: mỗi service phụ trách một domain.
+  \item \textbf{Loose Coupling}: service giao tiếp qua API, không truy cập database của nhau.
+  \item \textbf{High Cohesion}: các model trong một service cùng thuộc một nghiệp vụ.
+  \item \textbf{Database per Service}: mỗi service có database riêng.
+  \item \textbf{Design for Failure}: Storefront bắt lỗi \texttt{ServiceError} khi gọi service.
+\end{itemize}
+
+\section{Domain Driven Design (DDD)}
+
+\subsection{Mục tiêu}
+
+DDD giúp phân tích hệ thống theo domain nghiệp vụ thay vì theo tầng kỹ thuật. Với e-commerce, việc chia theo domain giúp xác định ranh giới service rõ ràng hơn.
+
+\subsection{Các khái niệm cốt lõi}
+
+\begin{itemize}
+  \item \textbf{Domain}: bài toán thương mại điện tử.
+  \item \textbf{Subdomain}: catalog, order, payment, shipping, inventory, user, AI.
+  \item \textbf{Bounded Context}: phạm vi dữ liệu và ngôn ngữ nghiệp vụ của từng service.
+  \item \textbf{Aggregate}: cụm entity được quản lý cùng nhau, ví dụ \texttt{Order} và \texttt{OrderItem}.
+\end{itemize}
+
+\subsection{Context Map}
+
+\begin{verbatim}
+Storefront/BFF
+  |-- Catalog Context
+  |-- Order Context
+  |-- User Context
+  |-- Payment Context
+  |-- Product/Inventory Context
+  |-- Shipping Context
+  `-- AI Context
+\end{verbatim}
+
+\imageplaceholder{Context Map của hệ thống}{Tự vẽ sơ đồ các bounded context: Storefront, Catalog, Order, User, Payment, Product/Inventory, Shipping, AI.}
+
+\subsection{DDD trong Microservices}
+
+Trong project, DDD được dùng để xác định các service:
+
+\begin{itemize}
+  \item Catalog Service quản lý dữ liệu sản phẩm để bán.
+  \item Product Service quản lý kho hàng vật lý.
+  \item Order Service quản lý lifecycle đơn hàng.
+  \item Payment Service quản lý payment transaction.
+  \item Shipping Service quản lý giao nhận.
+  \item User Service quản lý customer.
+  \item AI Service quản lý chatbot/RAG.
+\end{itemize}
+
+\section{Quá trình chuyển đổi từ Monolithic sang Microservices trong project}
+
+Project được chuyển đổi theo hướng Strangler Fig Pattern:
+
+\begin{enumerate}
+  \item Bắt đầu từ Django Monolithic với app \texttt{ecommerce\_ai}.
+  \item Tách Catalog Service để sở hữu dữ liệu sản phẩm.
+  \item Tách Order Service để sở hữu đơn hàng.
+  \item Tách User Service để quản lý khách hàng.
+  \item Tách AI Service khỏi \texttt{rag\_chat.py}.
+  \item Tách Payment Service, Product/Inventory Service và Shipping Service.
+  \item Storefront còn đóng vai trò BFF, gọi service qua HTTP.
+\end{enumerate}
+
+\section{Kết luận}
+
+Chương này trình bày nền tảng lý thuyết và lý do chuyển hệ thống từ Monolithic sang Microservices. Các khái niệm này được áp dụng trực tiếp vào project e-commerce đồ điện tử đang xây dựng.
+
+\clearpage
+
+% =======================
+% CHAPTER 2
+% =======================
+\chapter{Phát triển Hệ E-Commerce Microservices}
+
+\section{Xác định yêu cầu}
+
+\subsection{Functional Requirements}
+
+Hệ thống cần đáp ứng các chức năng sau:
+
+\begin{itemize}
+  \item Người dùng xem danh sách sản phẩm điện tử.
+  \item Người dùng xem chi tiết sản phẩm.
+  \item Người dùng thêm, cập nhật, xóa sản phẩm trong giỏ hàng.
+  \item Người dùng checkout và tạo đơn hàng.
+  \item Người dùng đăng ký, đăng nhập và xem tài khoản.
+  \item Chatbot AI hỗ trợ hỏi đáp.
+  \item Admin quản lý catalog sản phẩm.
+  \item Admin quản lý đơn hàng, thanh toán, kho và vận chuyển.
+\end{itemize}
+
+\subsection{Non-functional Requirements}
+
+\begin{itemize}
+  \item Hệ thống có thể chạy local bằng Docker Compose.
+  \item Mỗi service có database riêng.
+  \item Các service giao tiếp qua HTTP/JSON.
+  \item API được liệt kê tập trung trong thư mục \texttt{api-gateway}.
+  \item Storefront có thể chạy ở chế độ fallback local nếu chưa bật microservices.
+\end{itemize}
+
+\section{Phân rã hệ thống theo DDD}
+
+\subsection{Bounded Context}
+
+\begin{longtable}{|p{4cm}|p{5cm}|p{5cm}|}
+\hline
+\textbf{Context} & \textbf{Service} & \textbf{Dữ liệu sở hữu} \\
+\hline
+Storefront/BFF & \texttt{ecommerce\_ai} & Session cart, template, frontend route \\
+\hline
+Catalog & \texttt{catalog\_service} & Category, Product bán hàng \\
+\hline
+Order & \texttt{order\_service} & Order, OrderItem \\
+\hline
+User & \texttt{user\_service} & Customer \\
+\hline
+AI & \texttt{ai\_service} & ChatLog, RAG endpoint \\
+\hline
+Payment & \texttt{payment\_service} & Payment \\
+\hline
+Product/Inventory & \texttt{product\_service} & Warehouse, InventoryItem, StockMovement \\
+\hline
+Shipping & \texttt{shipping\_service} & Carrier, Shipment, RouteEvent \\
+\hline
+\end{longtable}
+
+\subsection{Nguyên tắc}
+
+Khi tách service, project tuân thủ các nguyên tắc:
+
+\begin{itemize}
+  \item Không service nào truy cập trực tiếp database của service khác.
+  \item Storefront gọi service thông qua client trong \texttt{ecommerce\_ai/services/}.
+  \item Mỗi service có admin riêng để quản trị dữ liệu của mình.
+  \item Docker Compose định nghĩa container và port của từng service.
+\end{itemize}
+
+\section{Thiết kế Product Service (Django)}
+
+Trong PDF mẫu, Product Service thường được hiểu là service quản lý sản phẩm. Trong project này, chức năng sản phẩm được tách thành hai phần:
+
+\begin{itemize}
+  \item \textbf{Catalog Service}: quản lý sản phẩm dùng để hiển thị và bán.
+  \item \textbf{Product/Inventory Service}: quản lý hàng hóa trong kho, warehouse và stock movement.
+\end{itemize}
+
+Việc tách này giúp phân biệt dữ liệu marketing/catalog với dữ liệu kho vật lý.
+
+\subsection{Phân loại sản phẩm}
+
+Các sản phẩm mẫu thuộc nhóm đồ điện tử:
+
+\begin{itemize}
+  \item Audio: tai nghe.
+  \item Computing: máy tính.
+  \item Photography: camera.
+  \item Wearables: đồng hồ thông minh.
+\end{itemize}
+
+\subsection{Model tổng quát}
+
+Catalog Service có model:
+
+\begin{lstlisting}[style=code,language=Python]
+class Category(models.Model):
+    name = models.CharField(max_length=120, unique=True)
+    slug = models.SlugField(max_length=140, unique=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+class Product(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.PROTECT)
+    name = models.CharField(max_length=180)
+    slug = models.SlugField(max_length=200, unique=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    original_price = models.DecimalField(max_digits=10, decimal_places=2,
+                                         null=True, blank=True)
+    short_desc = models.CharField(max_length=240)
+    description = models.TextField()
+    features = models.JSONField(default=list, blank=True)
+    stock = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+\end{lstlisting}
+
+\subsection{Chi tiết theo domain}
+
+Product/Inventory Service có các model:
+
+\begin{lstlisting}[style=code,language=Python]
+class Warehouse(models.Model):
+    code = models.SlugField(max_length=40, unique=True)
+    name = models.CharField(max_length=160)
+    address = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=120, blank=True)
+
+class InventoryItem(models.Model):
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.PROTECT)
+    product_id = models.PositiveIntegerField()
+    sku = models.CharField(max_length=80)
+    product_name = models.CharField(max_length=180)
+    quantity_available = models.PositiveIntegerField(default=0)
+    quantity_reserved = models.PositiveIntegerField(default=0)
+    reorder_level = models.PositiveIntegerField(default=5)
+
+class StockMovement(models.Model):
+    inventory_item = models.ForeignKey(InventoryItem, on_delete=models.CASCADE)
+    movement_type = models.CharField(max_length=20)
+    quantity = models.IntegerField()
+    reference = models.CharField(max_length=120, blank=True)
+\end{lstlisting}
+
+\subsection{API}
+
+\begin{longtable}{|p{5cm}|p{3cm}|p{6cm}|}
+\hline
+\textbf{Endpoint} & \textbf{Method} & \textbf{Chức năng} \\
+\hline
+\texttt{/api/products/} & GET & Danh sách sản phẩm bán trong Catalog Service \\
+\hline
+\texttt{/api/products/<id>/} & GET & Chi tiết sản phẩm bán \\
+\hline
+\texttt{/api/warehouses/} & GET/POST & Danh sách/tạo kho \\
+\hline
+\texttt{/api/inventory/} & GET/POST & Danh sách/tạo hàng hóa trong kho \\
+\hline
+\texttt{/api/inventory/<id>/adjust/} & POST & Điều chỉnh tồn kho \\
+\hline
+\texttt{/api/inventory/<id>/reserve/} & POST & Reserve hàng hóa \\
+\hline
+\texttt{/api/movements/} & GET & Lịch sử biến động kho \\
+\hline
+\end{longtable}
+
+\imageplaceholder{Product và Inventory Admin}{Capture admin của Catalog Service và Product/Inventory Service.}
+
+\section{Thiết kế User Service (Django)}
+
+\subsection{Phân loại người dùng}
+
+Project hiện có model \texttt{Customer} với các role:
+
+\begin{itemize}
+  \item \texttt{customer}: khách hàng.
+  \item \texttt{staff}: nhân viên.
+  \item \texttt{admin}: quản trị viên.
+\end{itemize}
+
+\subsection{Model}
+
+\begin{lstlisting}[style=code,language=Python]
+class Customer(models.Model):
+    email = models.EmailField(unique=True)
+    password_hash = models.CharField(max_length=128)
+    full_name = models.CharField(max_length=160)
+    phone = models.CharField(max_length=40, blank=True)
+    address = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=120, blank=True)
+    postal_code = models.CharField(max_length=40, blank=True)
+    role = models.CharField(max_length=20, default="customer")
+    is_active = models.BooleanField(default=True)
+\end{lstlisting}
+
+\subsection{Phân quyền (RBAC)}
+
+Project hiện mới lưu role trong model \texttt{Customer}, chưa triển khai JWT/RBAC đầy đủ cho từng API. Đây là phần có thể phát triển tiếp bằng cách dùng JWT access token và middleware kiểm tra role.
+
+\subsection{API}
+
+\begin{longtable}{|p{5cm}|p{3cm}|p{6cm}|}
+\hline
+\textbf{Endpoint} & \textbf{Method} & \textbf{Chức năng} \\
+\hline
+\texttt{/api/users/} & GET & Danh sách user \\
+\hline
+\texttt{/api/users/} & POST & Đăng ký user \\
+\hline
+\texttt{/api/users/login/} & POST & Đăng nhập \\
+\hline
+\texttt{/api/users/<id>/} & GET & Xem hồ sơ \\
+\hline
+\texttt{/api/users/<id>/} & PATCH/PUT & Cập nhật hồ sơ \\
+\hline
+\end{longtable}
+
+\imageplaceholder{Trang đăng ký, đăng nhập và tài khoản}{Capture \texttt{/register/}, \texttt{/login/}, \texttt{/account/}.}
+
+\section{Thiết kế Cart Service}
+
+Trong project hiện tại, Cart chưa được tách thành service riêng. Lý do là giỏ hàng vẫn được lưu trong session của Storefront/BFF để đơn giản hóa luồng người dùng ở giai đoạn MVP.
+
+\subsection{Model}
+
+Không có model database riêng cho Cart. Dữ liệu cart lưu trong session theo dạng:
+
+\begin{verbatim}
+{
+  "1": 2,
+  "3": 1
+}
+\end{verbatim}
+
+\subsection{Logic}
+
+Logic cart được tách ra file \texttt{ecommerce\_ai/cart\_ops.py}:
+
+\begin{itemize}
+  \item \texttt{get\_cart}: lấy cart từ session.
+  \item \texttt{save\_cart}: lưu cart vào session.
+  \item \texttt{cart\_count}: tính tổng số lượng.
+  \item \texttt{cart\_totals}: tính subtotal, tax, total.
+\end{itemize}
+
+\subsection{API}
+
+\begin{longtable}{|p{5cm}|p{3cm}|p{6cm}|}
+\hline
+\textbf{Endpoint} & \textbf{Method} & \textbf{Chức năng} \\
+\hline
+\texttt{/api/cart/add/} & POST & Thêm sản phẩm vào giỏ \\
+\hline
+\texttt{/api/cart/update/} & POST & Cập nhật số lượng \\
+\hline
+\texttt{/api/cart/remove/} & POST & Xóa sản phẩm khỏi giỏ \\
+\hline
+\end{longtable}
+
+\imageplaceholder{Trang giỏ hàng}{Capture trang \texttt{/cart/} sau khi thêm sản phẩm.}
+
+\section{Thiết kế Order Service}
+
+\subsection{Model}
+
+\begin{lstlisting}[style=code,language=Python]
+class Order(models.Model):
+    full_name = models.CharField(max_length=160)
+    email = models.EmailField()
+    phone = models.CharField(max_length=40, blank=True)
+    address = models.CharField(max_length=255)
+    city = models.CharField(max_length=120)
+    postal_code = models.CharField(max_length=40)
+    status = models.CharField(max_length=20, default="pending")
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    tax = models.DecimalField(max_digits=10, decimal_places=2)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    product_id = models.PositiveIntegerField()
+    product_name = models.CharField(max_length=180)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.PositiveIntegerField()
+    line_total = models.DecimalField(max_digits=10, decimal_places=2)
+\end{lstlisting}
+
+\subsection{Workflow}
+
+\begin{enumerate}
+  \item Storefront gửi thông tin checkout sang Order Service.
+  \item Order Service tạo \texttt{Order} và \texttt{OrderItem}.
+  \item Order Service gọi Catalog Service để reserve stock.
+  \item Storefront tạo Payment thông qua Payment Service.
+\end{enumerate}
+
+\section{Thiết kế Payment Service}
+
+\subsection{Model}
+
+\begin{lstlisting}[style=code,language=Python]
+class Payment(models.Model):
+    order_id = models.PositiveIntegerField()
+    customer_email = models.EmailField(blank=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default="USD")
+    method = models.CharField(max_length=30, default="cod")
+    status = models.CharField(max_length=20, default="pending")
+    transaction_id = models.CharField(max_length=64, unique=True)
+\end{lstlisting}
+
+\subsection{Trạng thái}
+
+Payment Service hỗ trợ các trạng thái:
+
+\begin{itemize}
+  \item \texttt{pending}
+  \item \texttt{succeeded}
+  \item \texttt{failed}
+  \item \texttt{refunded}
+\end{itemize}
+
+\subsection{API}
+
+\begin{longtable}{|p{5cm}|p{3cm}|p{6cm}|}
+\hline
+\textbf{Endpoint} & \textbf{Method} & \textbf{Chức năng} \\
+\hline
+\texttt{/api/payments/} & POST & Tạo payment \\
+\hline
+\texttt{/api/payments/<id>/} & GET & Chi tiết payment \\
+\hline
+\texttt{/api/payments/<id>/confirm/} & POST & Xác nhận thành công \\
+\hline
+\texttt{/api/payments/<id>/fail/} & POST & Đánh dấu thất bại \\
+\hline
+\end{longtable}
+
+\imageplaceholder{Payment Service Admin}{Capture danh sách Payment trong admin.}
+
+\section{Thiết kế Shipping Service}
+
+\subsection{Model}
+
+\begin{lstlisting}[style=code,language=Python]
+class Carrier(models.Model):
+    code = models.SlugField(max_length=40, unique=True)
+    name = models.CharField(max_length=160)
+    service_level = models.CharField(max_length=80, default="standard")
+    base_fee = models.DecimalField(max_digits=10, decimal_places=2)
+
+class Shipment(models.Model):
+    order_id = models.PositiveIntegerField(unique=True)
+    carrier = models.ForeignKey(Carrier, null=True, blank=True,
+                                on_delete=models.PROTECT)
+    tracking_number = models.CharField(max_length=80, unique=True, blank=True)
+    recipient_name = models.CharField(max_length=160)
+    destination_address = models.CharField(max_length=255)
+    destination_city = models.CharField(max_length=120)
+    status = models.CharField(max_length=20, default="pending")
+
+class RouteEvent(models.Model):
+    shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20)
+    location = models.CharField(max_length=180, blank=True)
+    note = models.TextField(blank=True)
+\end{lstlisting}
+
+\subsection{Trạng thái}
+
+Shipping Service hỗ trợ các trạng thái:
+
+\begin{itemize}
+  \item \texttt{pending}
+  \item \texttt{assigned}
+  \item \texttt{picked\_up}
+  \item \texttt{in\_transit}
+  \item \texttt{delivered}
+  \item \texttt{failed}
+  \item \texttt{cancelled}
+\end{itemize}
+
+\subsection{API}
+
+\begin{longtable}{|p{5cm}|p{3cm}|p{6cm}|}
+\hline
+\textbf{Endpoint} & \textbf{Method} & \textbf{Chức năng} \\
+\hline
+\texttt{/api/carriers/} & GET/POST & Danh sách/tạo đối tác vận chuyển \\
+\hline
+\texttt{/api/shipments/} & GET/POST & Danh sách/tạo shipment \\
+\hline
+\texttt{/api/shipments/<id>/assign/} & POST & Gán carrier \\
+\hline
+\texttt{/api/shipments/<id>/events/} & POST & Thêm sự kiện lộ trình \\
+\hline
+\end{longtable}
+
+\imageplaceholder{Shipping Service Admin}{Capture Carrier, Shipment và RouteEvent trong admin.}
+
+\section{Luồng hệ thống tổng thể}
+
+\begin{enumerate}
+  \item Người dùng mở Storefront.
+  \item Storefront lấy sản phẩm từ Catalog Service.
+  \item Người dùng thêm sản phẩm vào Cart session.
+  \item Người dùng checkout.
+  \item Storefront gọi Order Service.
+  \item Order Service gọi Catalog Service để reserve stock.
+  \item Storefront gọi Payment Service để tạo payment.
+  \item Admin có thể tạo Shipment trong Shipping Service.
+  \item Shipping Service gán Carrier và cập nhật RouteEvent.
+\end{enumerate}
+
+\imageplaceholder{Sequence diagram luồng mua hàng}{Tự vẽ sequence Browser -> Storefront -> Catalog -> Order -> Payment -> Shipping.}
+
+\section{Thực hành}
+
+\subsection{Mục tiêu}
+
+Mục tiêu thực hành là triển khai được hệ thống microservices chạy local, có thể thao tác các luồng chính qua frontend và admin.
+
+\subsection{Class Diagram}
+
+Các nhóm class chính:
+
+\begin{itemize}
+  \item Catalog: \texttt{Category}, \texttt{Product}.
+  \item User: \texttt{Customer}.
+  \item Order: \texttt{Order}, \texttt{OrderItem}.
+  \item Payment: \texttt{Payment}.
+  \item Product/Inventory: \texttt{Warehouse}, \texttt{InventoryItem}, \texttt{StockMovement}.
+  \item Shipping: \texttt{Carrier}, \texttt{Shipment}, \texttt{RouteEvent}.
+  \item AI: \texttt{ChatLog}.
+\end{itemize}
+
+\imageplaceholder{Class diagram tổng thể}{Tự vẽ class diagram từ các model trong từng service.}
+
+\subsection{Mapping Class Diagram sang Database}
+
+Mỗi class Django model được ánh xạ thành một bảng trong database SQLite riêng của service. Quan hệ \texttt{ForeignKey} được ánh xạ thành khóa ngoại trong cùng service. Các service không đặt khóa ngoại qua database của service khác; thay vào đó lưu ID tham chiếu như \texttt{product\_id}, \texttt{order\_id}.
+
+\subsection{Thiết kế Database cho từng Service}
+
+\begin{longtable}{|p{4cm}|p{10cm}|}
+\hline
+\textbf{Service} & \textbf{Bảng dữ liệu} \\
+\hline
+Catalog & Category, Product \\
+\hline
+User & Customer \\
+\hline
+Order & Order, OrderItem \\
+\hline
+Payment & Payment \\
+\hline
+Product/Inventory & Warehouse, InventoryItem, StockMovement \\
+\hline
+Shipping & Carrier, Shipment, RouteEvent \\
+\hline
+AI & ChatLog \\
+\hline
+\end{longtable}
+
+\subsection{So sánh SQLite với PostgreSQL}
+
+Trong project local, các service dùng SQLite để đơn giản hóa cài đặt. Với môi trường production, PostgreSQL phù hợp hơn vì hỗ trợ concurrency tốt hơn, mạnh hơn về transaction, backup, indexing và vận hành nhiều kết nối.
+
+\section{Kết luận}
+
+Chương 2 đã mô tả thiết kế hệ thống e-commerce microservices đúng với project hiện tại. Một số phần trong PDF mẫu như Notification Service, JWT hoàn chỉnh hoặc Kubernetes chưa được triển khai nên không trình bày như chức năng đã có, mà chỉ được xem là hướng phát triển.
+
+\clearpage
+
+% =======================
+% CHAPTER 3
+% =======================
+\chapter{AI Service cho tư vấn sản phẩm}
+
+\section{Mục tiêu}
+
+AI Service được tách khỏi Storefront nhằm xử lý chatbot/RAG. Người dùng có thể đặt câu hỏi trên widget chatbot ở trang chủ, Storefront chuyển request sang AI Service, AI Service sử dụng Neo4j và Groq để trả lời.
+
+\section{Kiến trúc AI Service}
+
+\begin{verbatim}
+Browser Chat Widget
+      |
+      v
+Storefront /api/chat/
+      |
+      v
+AI Service /api/chat/
+      |
+      |-- rag_chat.py
+      |-- Neo4jGraph
+      |-- ChatGroq
+      `-- GraphCypherQAChain
+\end{verbatim}
+
+\imageplaceholder{Chatbot trên trang chủ}{Capture widget chatbot và một câu hỏi mẫu.}
+
+\section{Thu thập dữ liệu}
+
+\subsection{User Behavior Data}
+
+File \texttt{generate\_data.py} sinh dữ liệu hành vi người dùng gồm:
+
+\begin{itemize}
+  \item \texttt{user\_id}
+  \item \texttt{product\_id}
+  \item \texttt{action}
+  \item \texttt{timestamp}
+\end{itemize}
+
+\subsection{Ví dụ dataset}
+
+\begin{verbatim}
+user_id,product_id,action,timestamp
+U001,P003,view,2026-...
+U001,P010,click,2026-...
+U001,P010,add_to_cart,2026-...
+\end{verbatim}
+
+\section{Mô hình LSTM (Sequence Modeling)}
+
+\subsection{Ý tưởng}
+
+Mô hình sequence learning dự đoán hành vi tiếp theo của người dùng dựa trên chuỗi hành vi trước đó. Trong project, file \texttt{train\_models.py} dùng 7 hành vi đầu để dự đoán hành vi thứ 8.
+
+\subsection{Model chi tiết}
+
+Project huấn luyện ba mô hình:
+
+\begin{itemize}
+  \item RNN
+  \item LSTM
+  \item BiLSTM
+\end{itemize}
+
+\subsection{Training}
+
+Kết quả huấn luyện:
+
+\begin{itemize}
+  \item \texttt{model\_best.pth}: model tốt nhất.
+  \item \texttt{evaluation\_plots.png}: biểu đồ loss/accuracy.
+\end{itemize}
+
+\imageplaceholder{Biểu đồ huấn luyện model}{Chèn ảnh \texttt{evaluation\_plots.png}.}
+
+\section{Knowledge Graph với Neo4j}
+
+\subsection{Mô hình đồ thị}
+
+File \texttt{setup\_neo4j.py} nạp dữ liệu CSV vào Neo4j với:
+
+\begin{itemize}
+  \item Node \texttt{User}
+  \item Node \texttt{Product}
+  \item Relationship \texttt{VIEWED}, \texttt{CLICKED}, \texttt{ADDED\_TO\_CART}
+\end{itemize}
+
+\subsection{Ví dụ Cypher}
+
+\begin{verbatim}
+MATCH (u:User)-[r:VIEWED]->(p:Product)
+RETURN u, r, p
+LIMIT 25
+\end{verbatim}
+
+\subsection{Truy vấn gợi ý}
+
+Có thể truy vấn sản phẩm được nhiều người xem hoặc thêm vào giỏ hàng để hỗ trợ gợi ý sản phẩm.
+
+\imageplaceholder{Neo4j Browser hiển thị graph}{Capture Neo4j Browser sau khi chạy \texttt{setup\_neo4j.py}.}
+
+\section{RAG (Retrieval-Augmented Generation)}
+
+\subsection{Pipeline}
+
+\begin{enumerate}
+  \item Người dùng nhập câu hỏi.
+  \item AI Service gửi câu hỏi vào \texttt{GraphCypherQAChain}.
+  \item LLM sinh Cypher query.
+  \item Neo4j trả dữ liệu liên quan.
+  \item LLM sinh câu trả lời cuối cùng.
+\end{enumerate}
+
+\subsection{Vector Database}
+
+Project hiện chưa triển khai vector database như FAISS hoặc ChromaDB. Phần RAG hiện dựa trên GraphCypherQAChain và Neo4j. Vector database có thể được bổ sung trong tương lai nếu cần tìm kiếm ngữ nghĩa trên mô tả sản phẩm.
+
+\subsection{Ví dụ}
+
+\begin{verbatim}
+POST /api/chat/
+{
+  "message": "Which products are popular?"
+}
+\end{verbatim}
+
+\section{Kết hợp Hybrid Model}
+
+Trong project hiện tại, LSTM/BiLSTM đã được huấn luyện độc lập, còn chatbot/RAG đã tách thành AI Service. Việc kết hợp thành hybrid recommendation chưa được tích hợp vào giao diện. Công thức định hướng:
+
+\[
+final\_score = w_1 \times sequence + w_2 \times graph + w_3 \times semantic
+\]
+
+\section{Hai dạng AI Service}
+
+\subsection{Recommendation List}
+
+Recommendation list chưa được expose thành API riêng trong project hiện tại. Đây là hướng phát triển tiếp theo dựa trên model \texttt{model\_best.pth} và dữ liệu Neo4j.
+
+\subsection{Chatbot tư vấn}
+
+Chatbot tư vấn đã được triển khai qua:
+
+\begin{itemize}
+  \item Storefront endpoint \texttt{/api/chat/}
+  \item AI Service endpoint \texttt{/api/chat/}
+  \item Widget chatbot trên trang chủ
+\end{itemize}
+
+\section{Triển khai AI Service}
+
+\subsection{Tech stack}
+
+\begin{itemize}
+  \item Django cho AI Service.
+  \item Neo4j cho knowledge graph.
+  \item LangChain Neo4j.
+  \item Groq LLM.
+  \item PyTorch cho mô hình sequence learning.
+\end{itemize}
+
+\subsection{Kiến trúc}
+
+AI Service chạy độc lập ở port 8004 trong Docker Compose.
+
+\section{Kết luận}
+
+AI Service giúp hệ thống mở rộng trải nghiệm tư vấn sản phẩm. Phần chatbot đã được tách service, còn recommendation list và hybrid model là hướng phát triển tiếp theo.
+
+\clearpage
+
+% =======================
+% CHAPTER 4
+% =======================
+\chapter{Xây dựng hệ thống hoàn chỉnh}
+
+\section{Kiến trúc tổng thể}
+
+\subsection{Mô hình hệ thống}
+
+Hệ thống hoàn chỉnh gồm Storefront/BFF và các microservice Django độc lập:
+
+\begin{itemize}
+  \item Storefront/BFF: port 8000.
+  \item Catalog Service: port 8001.
+  \item Order Service: port 8002.
+  \item User Service: port 8003.
+  \item AI Service: port 8004.
+  \item Payment Service: port 8005.
+  \item Product/Inventory Service: port 8006.
+  \item Shipping Service: port 8007.
+  \item Neo4j: port 7474 và 7687.
+\end{itemize}
+
+\imageplaceholder{Kiến trúc tổng thể hệ thống}{Capture hoặc vẽ sơ đồ từ \texttt{docker-compose.yml}.}
+
+\subsection{Nguyên tắc}
+
+\begin{itemize}
+  \item Mỗi service có database riêng.
+  \item Giao tiếp qua HTTP/JSON.
+  \item Storefront đóng vai trò BFF.
+  \item API Gateway được mô tả trong thư mục \texttt{api-gateway}.
+\end{itemize}
+
+\section{System Architecture}
+
+\subsection{Overview}
+
+Storefront là điểm vào chính của người dùng. Khi chạy \texttt{USE\_MICROSERVICES=1}, Storefront không xử lý mọi nghiệp vụ bằng database local mà gọi các service riêng.
+
+\subsection{Microservice Architecture}
+
+Mỗi service là một Django project nằm trong thư mục \texttt{services/}. Service có file settings, urls, models, views, admin và migrations riêng.
+
+\subsection{API Gateway}
+
+Thư mục \texttt{api-gateway/} có:
+
+\begin{itemize}
+  \item \texttt{README.md}: liệt kê API toàn hệ thống.
+  \item \texttt{nginx.conf}: cấu hình route mẫu.
+\end{itemize}
+
+\subsection{Service Communication}
+
+Storefront gọi service qua các client:
+
+\begin{itemize}
+  \item \texttt{ecommerce\_ai/services/catalog.py}
+  \item \texttt{ecommerce\_ai/services/orders.py}
+  \item \texttt{ecommerce\_ai/services/users.py}
+  \item \texttt{ecommerce\_ai/services/ai.py}
+  \item \texttt{ecommerce\_ai/services/payments.py}
+  \item \texttt{ecommerce\_ai/services/products.py}
+  \item \texttt{ecommerce\_ai/services/shipping.py}
+\end{itemize}
+
+\subsection{Containerization and Deployment}
+
+Docker Compose chạy toàn bộ hệ thống local. Mỗi service dùng chung \texttt{Dockerfile} nhưng chạy command khác nhau.
+
+\subsection{System Structure}
+
+\begin{verbatim}
+aiecommerce2/
+|-- ecommerce_ai/
+|-- services/
+|   |-- catalog_service/
+|   |-- order_service/
+|   |-- user_service/
+|   |-- ai_service/
+|   |-- payment_service/
+|   |-- product_service/
+|   `-- shipping_service/
+|-- api-gateway/
+|-- docker-compose.yml
+`-- Dockerfile
+\end{verbatim}
+
+\imageplaceholder{Cấu trúc thư mục project}{Capture cây thư mục trong IDE.}
+
+\subsection{Design Principles}
+
+\begin{itemize}
+  \item Domain separation.
+  \item Database per service.
+  \item API-based communication.
+  \item BFF pattern cho frontend.
+  \item Incremental migration từ monolith.
+\end{itemize}
+
+\subsection{Security Considerations}
+
+Project hiện mới có đăng nhập cơ bản qua User Service và session ở Storefront. JWT/OAuth2 chưa được triển khai. Khi triển khai production cần:
+
+\begin{itemize}
+  \item Đưa \texttt{SECRET\_KEY}, \texttt{GROQ\_API\_KEY} vào biến môi trường an toàn.
+  \item Dùng JWT cho API giữa client và gateway.
+  \item Giới hạn quyền admin.
+  \item Không public các service nội bộ trực tiếp ra Internet.
+\end{itemize}
+
+\subsection{Discussion}
+
+Kiến trúc hiện tại phù hợp với mục tiêu đồ án vì thể hiện được cách tách domain thành service độc lập. Tuy nhiên, hệ thống vẫn cần bổ sung monitoring, logging tập trung, authentication chuẩn và event-driven communication để đạt mức production.
+
+\section{API Gateway (Nginx)}
+
+\subsection{Vai trò}
+
+API Gateway đóng vai trò điểm vào duy nhất, route request đến service phù hợp. Trong project, gateway mới ở mức tài liệu và cấu hình mẫu.
+
+\subsection{Cấu hình mẫu}
+
+\begin{lstlisting}[style=code]
+location /catalog/ {
+    rewrite ^/catalog/(.*)$ /$1 break;
+    proxy_pass http://catalog_service;
+}
+
+location /orders/ {
+    rewrite ^/orders/(.*)$ /$1 break;
+    proxy_pass http://order_service;
+}
+\end{lstlisting}
+
+\imageplaceholder{API Gateway README}{Capture \texttt{api-gateway/README.md} hoặc \texttt{api-gateway/nginx.conf}.}
+
+\section{Authentication}
+
+PDF mẫu có phần JWT Authentication. Trong project hiện tại, JWT chưa được triển khai. Hệ thống đang dùng:
+
+\begin{itemize}
+  \item User Service để đăng ký/đăng nhập.
+  \item Storefront session để lưu customer đang đăng nhập.
+\end{itemize}
+
+JWT là hướng phát triển tiếp theo, đặc biệt khi cần cho mobile app hoặc frontend gọi API Gateway trực tiếp.
+
+\section{Giao tiếp giữa các Service}
+
+\subsection{REST API call}
+
+Ví dụ Storefront gọi service:
+
+\begin{lstlisting}[style=code,language=Python]
+def request_json(method, url, payload=None):
+    body = None if payload is None else json.dumps(payload).encode("utf-8")
+    request = Request(url, data=body, method=method,
+                      headers={"Content-Type": "application/json"})
+    with urlopen(request, timeout=5) as response:
+        return json.loads(response.read().decode("utf-8"))
+\end{lstlisting}
+
+\subsection{Best Practice}
+
+\begin{itemize}
+  \item Luôn đặt timeout khi gọi service.
+  \item Bắt lỗi HTTP và trả lỗi rõ ràng.
+  \item Không truy cập trực tiếp database của service khác.
+  \item Với production nên thêm retry, circuit breaker và tracing.
+\end{itemize}
+
+\section{Docker hóa hệ thống}
+
+\subsection{Dockerfile (Django)}
+
+Project dùng một Dockerfile chung cho các service Django, cài dependencies từ \texttt{requirements.txt}.
+
+\subsection{docker-compose.yml}
+
+Docker Compose định nghĩa các container:
+
+\begin{itemize}
+  \item \texttt{ecom\_django}
+  \item \texttt{ecom\_catalog}
+  \item \texttt{ecom\_orders}
+  \item \texttt{ecom\_users}
+  \item \texttt{ecom\_ai}
+  \item \texttt{ecom\_payments}
+  \item \texttt{ecom\_products}
+  \item \texttt{ecom\_shipping}
+  \item \texttt{ecom\_neo4j}
+\end{itemize}
+
+\begin{verbatim}
+docker-compose up --build
+\end{verbatim}
+
+\imageplaceholder{Docker Compose chạy toàn bộ hệ thống}{Capture Docker Desktop hoặc terminal khi các container đang chạy.}
+
+\section{Luồng hệ thống (End-to-End)}
+
+\subsection{Use case: Mua hàng}
+
+\begin{enumerate}
+  \item User mở Storefront.
+  \item Storefront lấy product từ Catalog Service.
+  \item User thêm sản phẩm vào cart.
+  \item Storefront lưu cart trong session.
+  \item User checkout.
+  \item Storefront gọi Order Service.
+  \item Order Service gọi Catalog Service để reserve stock.
+  \item Storefront gọi Payment Service để tạo payment.
+  \item User thấy trang xác nhận đơn hàng.
+\end{enumerate}
+
+\subsection{Sequence logic}
+
+\begin{verbatim}
+Browser -> Storefront: POST /checkout/
+Storefront -> Order Service: POST /api/orders/
+Order Service -> Catalog Service: POST /api/stock/reserve/
+Storefront -> Payment Service: POST /api/payments/
+Storefront -> Browser: Redirect /checkout/success/<id>/
+\end{verbatim}
+
+\imageplaceholder{Sequence diagram checkout}{Tự vẽ sequence diagram dựa trên luồng trên.}
+
+\section{Logging và Monitoring}
+
+Project hiện chưa có centralized logging/monitoring. Ở môi trường production có thể bổ sung:
+
+\begin{itemize}
+  \item Logging tập trung bằng ELK hoặc Loki.
+  \item Metrics bằng Prometheus.
+  \item Dashboard bằng Grafana.
+  \item Distributed tracing bằng OpenTelemetry.
+\end{itemize}
+
+\section{Đánh giá hệ thống}
+
+\subsection{Hiệu năng}
+
+Hệ thống chạy tốt ở môi trường local cho mục tiêu học tập và demo. Khi triển khai production, cần thay SQLite bằng PostgreSQL và dùng web server như Gunicorn/Uvicorn sau Nginx.
+
+\subsection{Khả năng mở rộng}
+
+Do mỗi service chạy độc lập, có thể scale các service khác nhau theo tải thực tế. Ví dụ AI Service có thể scale riêng nếu chatbot nhiều request.
+
+\subsection{Ưu điểm}
+
+\begin{itemize}
+  \item Bám sát kiến trúc microservices.
+  \item Có nhiều service thật, không chỉ mô tả lý thuyết.
+  \item Có admin cho các service quản trị.
+  \item Có Docker Compose và API Gateway document.
+  \item Có AI/RAG với Neo4j.
+\end{itemize}
+
+\subsection{Nhược điểm}
+
+\begin{itemize}
+  \item Chưa có JWT hoàn chỉnh.
+  \item Chưa có event bus/message broker.
+  \item Payment mới là mô phỏng.
+  \item Chưa có monitoring tập trung.
+  \item Cart vẫn nằm trong Storefront session, chưa tách service riêng.
+\end{itemize}
+
+\chapter*{Kết luận}
+\addcontentsline{toc}{chapter}{Kết luận}
+
+Tiểu luận đã trình bày quá trình chuyển từ Monolithic sang Microservices và áp dụng vào hệ thống e-commerce đồ dùng điện tử. Project hiện đã có Storefront/BFF và các service độc lập: Catalog, Order, User, AI, Payment, Product/Inventory và Shipping. Các service giao tiếp qua HTTP/JSON, có database riêng, admin riêng và được chạy bằng Docker Compose.
+
+So với Monolithic ban đầu, kiến trúc mới có ranh giới nghiệp vụ rõ hơn, dễ mở rộng hơn và phù hợp hơn với hệ thống thương mại điện tử hiện đại. Tuy nhiên, để đạt mức production, hệ thống cần tiếp tục bổ sung API Gateway chạy thật, JWT, message broker, monitoring, logging và payment gateway thật.
+
+\end{document}

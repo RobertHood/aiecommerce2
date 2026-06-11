@@ -12,6 +12,96 @@ services:
       - neo4j_data:/data
       - neo4j_logs:/logs
 
+  catalog:
+    build: .
+    container_name: ecom_catalog
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+    command: >
+      sh -c "python services/catalog_service/manage.py migrate &&
+             python services/catalog_service/manage.py runserver 0.0.0.0:8001"
+
+  orders:
+    build: .
+    container_name: ecom_orders
+    ports:
+      - "8002:8002"
+    volumes:
+      - .:/app
+    environment:
+      - CATALOG_SERVICE_URL=http://catalog:8001
+    depends_on:
+      - catalog
+    command: >
+      sh -c "python services/order_service/manage.py migrate &&
+             python services/order_service/manage.py runserver 0.0.0.0:8002"
+
+  users:
+    build: .
+    container_name: ecom_users
+    ports:
+      - "8003:8003"
+    volumes:
+      - .:/app
+    command: >
+      sh -c "python services/user_service/manage.py migrate &&
+             python services/user_service/manage.py runserver 0.0.0.0:8003"
+
+  ai:
+    build: .
+    container_name: ecom_ai
+    ports:
+      - "8004:8004"
+    volumes:
+      - .:/app
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=password
+      - GROQ_API_KEY=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
+      - CATALOG_SERVICE_URL=http://catalog:8001
+    depends_on:
+      - neo4j
+      - catalog
+    command: >
+      sh -c "python services/ai_service/manage.py migrate &&
+             python services/ai_service/manage.py runserver 0.0.0.0:8004"
+
+  payments:
+    build: .
+    container_name: ecom_payments
+    ports:
+      - "8005:8005"
+    volumes:
+      - .:/app
+    command: >
+      sh -c "python services/payment_service/manage.py migrate &&
+             python services/payment_service/manage.py runserver 0.0.0.0:8005"
+
+  products:
+    build: .
+    container_name: ecom_products
+    ports:
+      - "8006:8006"
+    volumes:
+      - .:/app
+    command: >
+      sh -c "python services/product_service/manage.py migrate &&
+             python services/product_service/manage.py runserver 0.0.0.0:8006"
+
+  shipping:
+    build: .
+    container_name: ecom_shipping
+    ports:
+      - "8007:8007"
+    volumes:
+      - .:/app
+    command: >
+      sh -c "python services/shipping_service/manage.py migrate &&
+             python services/shipping_service/manage.py runserver 0.0.0.0:8007"
+
   web:
     build: .
     container_name: ecom_django
@@ -24,9 +114,26 @@ services:
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=password
       - GROQ_API_KEY=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
+      - USE_MICROSERVICES=1
+      - CATALOG_SERVICE_URL=http://catalog:8001
+      - ORDER_SERVICE_URL=http://orders:8002
+      - USER_SERVICE_URL=http://users:8003
+      - AI_SERVICE_URL=http://ai:8004
+      - PAYMENT_SERVICE_URL=http://payments:8005
+      - PRODUCT_SERVICE_URL=http://products:8006
+      - SHIPPING_SERVICE_URL=http://shipping:8007
     depends_on:
       - neo4j
-    command: python manage.py runserver 0.0.0.0:8000
+      - catalog
+      - orders
+      - users
+      - ai
+      - payments
+      - products
+      - shipping
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
 
 volumes:
   neo4j_data:

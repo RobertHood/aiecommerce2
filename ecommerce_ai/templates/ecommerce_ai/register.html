@@ -1,0 +1,43 @@
+{% extends "ecommerce_ai/auth_base.html" %}
+
+{% block title %}Register - Nexus Store{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <h1>Create Account</h1>
+    <p class="lead">This form creates a customer record through the User Service.</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="field">
+            <label for="full_name">Full name</label>
+            <input id="full_name" name="full_name" type="text" required autocomplete="name">
+        </div>
+        <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" required autocomplete="email">
+        </div>
+        <div class="field">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" required autocomplete="new-password">
+        </div>
+        <div class="field">
+            <label for="phone">Phone</label>
+            <input id="phone" name="phone" type="tel" autocomplete="tel">
+        </div>
+        <div class="field">
+            <label for="address">Address</label>
+            <input id="address" name="address" type="text" autocomplete="street-address">
+        </div>
+        <div class="field">
+            <label for="city">City</label>
+            <input id="city" name="city" type="text" autocomplete="address-level2">
+        </div>
+        <div class="field">
+            <label for="postal_code">Postal code</label>
+            <input id="postal_code" name="postal_code" type="text" autocomplete="postal-code">
+        </div>
+        <button type="submit" class="btn"><i class="fa-solid fa-user-plus"></i> Create Account</button>
+    </form>
+    <p class="alt">Already have an account? <a href="/login/">Login</a></p>
+</section>
+{% endblock %}

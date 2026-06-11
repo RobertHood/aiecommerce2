@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -117,3 +118,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+USE_MICROSERVICES = os.getenv('USE_MICROSERVICES', '0') == '1'
+CATALOG_SERVICE_URL = os.getenv('CATALOG_SERVICE_URL', 'http://127.0.0.1:8001')
+ORDER_SERVICE_URL = os.getenv('ORDER_SERVICE_URL', 'http://127.0.0.1:8002')
+USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://127.0.0.1:8003')
+AI_SERVICE_URL = os.getenv('AI_SERVICE_URL', 'http://127.0.0.1:8004')
+PAYMENT_SERVICE_URL = os.getenv('PAYMENT_SERVICE_URL', 'http://127.0.0.1:8005')
+PRODUCT_SERVICE_URL = os.getenv('PRODUCT_SERVICE_URL', 'http://127.0.0.1:8006')
+SHIPPING_SERVICE_URL = os.getenv('SHIPPING_SERVICE_URL', 'http://127.0.0.1:8007')
